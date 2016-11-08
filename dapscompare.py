@@ -6,6 +6,7 @@ import threading
 import time
 import os
 import queue
+from subprocess import check_output, Popen, PIPE
 
 class myThread (threading.Thread):
 	def __init__(self, threadID, name, counter):
@@ -32,10 +33,14 @@ class myThread (threading.Thread):
 				runTests(testcase)
 
 def dapsCompile(testcase):
-	pass
 	# find DC files
-	# run daps on dc files and create PDFs
-	# convert all PDF pages into numberd images and place them in reference or comparison folder
+	for filename in os.listdir("./testcases/"+testcase):
+		if(filename[0:2] == "DC"):
+			# run daps on dc files and create PDFs
+			my_env = os.environ.copy()
+			my_env["DEBIAN_FRONTEND"] = "noninteractive"
+			process = Popen(["cd ./testcases/"+testcase+" && /usr/bin/daps -d "+filename+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+			# convert all PDF pages into numberd images and place them in reference or comparison folder
 	
 def runTests(testcase):
 	pass
