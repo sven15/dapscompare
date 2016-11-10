@@ -31,7 +31,7 @@ class myThread (threading.Thread):
 			outputTerminal(self.name+" now working on "+testcase)
 			# compile DC file to either reference or comparison folder, depending on mode
 			dapsCompile(testcase)
-			if(mode == 2):
+			if(config_settings.mode == 2):
 				runTests(testcase)
 
 def dapsCompile(testcase):
@@ -44,11 +44,10 @@ def dapsCompile(testcase):
 			process.wait()
 			
 			# convert all PDF pages into numbered images and place them in reference or comparison folder
-			global mode
-			if(mode == 1):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert build/*/*.pdf dapscompare-reference/page.png"
-			elif(mode == 2):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert build/*/*.pdf dapscompare-comparison/page.png"
+			if(config_settings.mode == 1):
+				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 150 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/page.png"
+			elif(config_settings.mode == 2):
+				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 150 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/page.png"
 			process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
 	
@@ -69,26 +68,37 @@ def outputTerminal(text):
 	print (text)
 	outputLock.release()      
 
+class MyConfig:
+	def __init__(self):
+		# 1 = build reference
+		# 2 = build comparison and run tests
+		self.mode = 2
+
+		# show all changes in qt interface
+		self.visual = False
+
 def cli_interpreter():
 	for parameter in sys.argv:
 		if parameter == "compare":
-			mode = 2
+			config_settings.mode = 2
 		if parameter == "reference":
-			mode = 1
+			config_settings.mode = 1
 		if parameter == "--help":
 			f = open('MANUAL', 'r')
 			print(f.read())
 			f.close()
 			sys.exit()
+		if parameter == "--visual":
+			config_settings.visual = True
 
 def main():
-	global mode
-	# 1 = build reference
-	# 2 = build comparison and run tests
-	mode = 2
+	global config_settings
+	config_settings = MyConfig()
 	
 	cli_interpreter()
 	
+	
+		
 	# get number of available cpus. 
 	# we want to compile as many test cases with daps at the same time 
 	# as we can
