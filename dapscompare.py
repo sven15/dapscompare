@@ -9,6 +9,8 @@ import sys
 from subprocess import check_output, Popen, PIPE
 from scipy.misc import *
 import numpy
+from modules.qtcompare import *
+from PyQt4 import QtGui, QtCore
 
 class myThread (threading.Thread):
 	def __init__(self, threadID, name, counter):
@@ -31,7 +33,7 @@ class myThread (threading.Thread):
 			outputTerminal(self.name+" now working on "+testcase)
 			# compile DC file to either reference or comparison folder, depending on mode
 			dapsCompile(testcase)
-			if(config_settings.mode == 2):
+			if(configSettings.mode == 2):
 				runTests(testcase)
 
 def dapsCompile(testcase):
@@ -44,9 +46,9 @@ def dapsCompile(testcase):
 			process.wait()
 			
 			# convert all PDF pages into numbered images and place them in reference or comparison folder
-			if(config_settings.mode == 1):
+			if(configSettings.mode == 1):
 				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 150 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/page.png"
-			elif(config_settings.mode == 2):
+			elif(configSettings.mode == 2):
 				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 150 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/page.png"
 			process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
@@ -54,13 +56,19 @@ def dapsCompile(testcase):
 def runTests(testcase):
 	# run tests on images in reference and comparison folder
 	for filename in os.listdir("./testcases/"+testcase+"/dapscompare-comparison/"):
-		image1 = imread("./testcases/"+testcase+"/dapscompare-reference/"+filename)
-		image2 = imread("./testcases/"+testcase+"/dapscompare-comparison/"+filename)
-		image3 = image1 - image2
-		
-		imsave("./testcases/"+testcase+"/dapscompare-result/"+filename,image3)
-		if numpy.count_nonzero(image3) > 0:
+		referencePath = "./testcases/"+testcase+"/dapscompare-reference/"+filename
+		comparisonPath = "./testcases/"+testcase+"/dapscompare-comparison/"+filename
+		diffPath = "./testcases/"+testcase+"/dapscompare-result/"+filename
+		imgRef = imread(referencePath)
+		imgComp = imread(comparisonPath)
+		imgDiff = imgRef - imgComp
+		global diffCollectionLock, diffCollection
+		imsave(diffPath,imgDiff)
+		if numpy.count_nonzero(imgDiff) > 0:
 			outputTerminal("Image "+"./testcases/"+testcase+"/dapscompare-comparison/"+filename+" has changed.")
+			diffCollectionLock.acquire()
+			diffCollection.collection.append([referencePath, comparisonPath, diffPath])
+			diffCollectionLock.release()
 
 def outputTerminal(text):
 	global outputLock
@@ -77,23 +85,29 @@ class MyConfig:
 		# show all changes in qt interface
 		self.visual = False
 
+class DiffCollector:
+	def __init__(self):
+		self.collection = []
+
 def cli_interpreter():
 	for parameter in sys.argv:
 		if parameter == "compare":
-			config_settings.mode = 2
+			configSettings.mode = 2
 		if parameter == "reference":
-			config_settings.mode = 1
+			configSettings.mode = 1
 		if parameter == "--help":
 			f = open('MANUAL', 'r')
 			print(f.read())
 			f.close()
 			sys.exit()
 		if parameter == "--visual":
-			config_settings.visual = True
+			configSettings.visual = True
 
 def main():
-	global config_settings
-	config_settings = MyConfig()
+	global configSettings, diffCollection, diffCollectionLock
+	configSettings = MyConfig()
+	diffCollection = DiffCollector()
+	diffCollectionLock = threading.Lock()
 	
 	cli_interpreter()
 	
@@ -126,7 +140,11 @@ def main():
 	# Wait for all threads to complete
 	for t in threads:
 		t.join()
-	print ("Exiting Main Thread")
+	#print ("Exiting Main Thread")
+	if configSettings.visual and configSettings.mode:
+		app = QtGui.QApplication(sys.argv)
+		ex = qtImageCompare(diffCollection.collection)
+		sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()
