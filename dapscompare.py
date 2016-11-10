@@ -72,11 +72,14 @@ def outputTerminal(text):
 def cli_interpreter():
 	for parameter in sys.argv:
 		if parameter == "compare":
-			global mode
 			mode = 2
 		if parameter == "reference":
-			global mode
 			mode = 1
+		if parameter == "--help":
+			f = open('MANUAL', 'r')
+			print(f.read())
+			f.close()
+			sys.exit()
 
 def main():
 	global mode
