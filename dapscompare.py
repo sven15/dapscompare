@@ -8,6 +8,7 @@ import queue
 import sys
 from subprocess import check_output, Popen, PIPE
 from scipy.misc import *
+import numpy
 
 class myThread (threading.Thread):
 	def __init__(self, threadID, name, counter):
@@ -53,14 +54,14 @@ def dapsCompile(testcase):
 	
 def runTests(testcase):
 	# run tests on images in reference and comparison folder
-	print("./testcases/"+testcase+"/dapscompare-comparison/")
 	for filename in os.listdir("./testcases/"+testcase+"/dapscompare-comparison/"):
 		image1 = imread("./testcases/"+testcase+"/dapscompare-reference/"+filename)
 		image2 = imread("./testcases/"+testcase+"/dapscompare-comparison/"+filename)
 		image3 = image1 - image2
-
+		
 		imsave("./testcases/"+testcase+"/dapscompare-result/"+filename,image3)
-	
+		if numpy.count_nonzero(image3) > 0:
+			outputTerminal("Image "+"./testcases/"+testcase+"/dapscompare-comparison/"+filename+" has changed.")
 
 def outputTerminal(text):
 	global outputLock
