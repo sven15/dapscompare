@@ -90,6 +90,7 @@ def outputTerminal(text):
 class MyConfig:
 	def __init__(self):
 		# set standard values for all other needed parameters
+		self.directory = os.getcwd()
 		
 		# 1 = build reference
 		# 2 = build comparison and run tests (standard)
@@ -120,8 +121,9 @@ class MyConfig:
 			elif parameter == "--no-gui":
 				self.noGui = False
 			elif parameter.startswith("--daps="):
-				self.dapsParam = parameter[7:-1]
-				print(self.dapsParam)
+				self.dapsParam = parameter[7:]
+			elif parameter.startswith("--testcases=''"):
+				self.directory = parameter[12:]
 
 class DiffCollector:
 	def __init__(self):

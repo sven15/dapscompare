@@ -40,3 +40,7 @@ clean		Remove all temporary files from working directories. Run
 		--force will be added automatically.
 
 --no-gui	Don't start GUI when "compare" is finished.
+
+--testcases=''	Sets the path to the folder containing the test casses.
+		If none is set, the current working directory is 
+		assumed.

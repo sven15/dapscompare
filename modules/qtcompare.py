@@ -40,7 +40,11 @@ class qtImageCompare(QtGui.QMainWindow):
 	def initUI(self,imagesList):
 		if imagesList == False:
 			# read results file
-			imagesList = json.loads(readFile("./results.json"))
+
+			if readFile("./results.json") == False:
+				print("Nothing to do.")
+				sys.exit()
+			imagesList = json.loads()
 			imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
 		self.imagesList = imagesList
 		self.imagePos = 0
