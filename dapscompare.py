@@ -53,14 +53,14 @@ def dapsCompilePDF(testcase):
 		if(filename[0:2] == "DC"):
 			# run daps on dc files and create PDFs
 			my_env = os.environ.copy()
-			process = Popen(["cd ./testcases/"+testcase+" && /usr/bin/daps --force -d "+filename+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+			process = Popen(["cd ./testcases/"+testcase+" && /usr/bin/daps "+configSettings.dapsParam+" -d "+filename+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
 			
 			# convert all PDF pages into numbered images and place them in reference or comparison folder
 			if(configSettings.mode == 1):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/pdf/page.png"
+				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/pdf/page-%03d.png"
 			elif(configSettings.mode == 2):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/pdf/page.png"
+				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/pdf/page-%03d.png"
 			process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
 	
@@ -98,25 +98,30 @@ class MyConfig:
 		self.mode = 0
 		
 		# usually show GUI after comparison
-		self.noGui = False
+		self.noGui = True
+		
+		self.dapsParam = "--force"
 		
 		# first read CLI parameters
 		for parameter in sys.argv:
 			if parameter == "compare":
 				self.mode = 2
-			if parameter == "reference":
+			elif parameter == "reference":
 				self.mode = 1
-			if parameter == "view":
+			elif parameter == "view":
 				self.mode = 3
-			if parameter == "clean":
+			elif parameter == "clean":
 				self.mode = 4
-			if parameter == "--help":
+			elif parameter == "--help":
 				f = open('README', 'r')
 				print(f.read())
 				f.close()
 				sys.exit()
-			if parameter == "--no-gui":
-				self.noGui = True
+			elif parameter == "--no-gui":
+				self.noGui = False
+			elif parameter.startswith("--daps="):
+				self.dapsParam = parameter[7:-1]
+				print(self.dapsParam)
 
 class DiffCollector:
 	def __init__(self):
@@ -156,10 +161,11 @@ def spawnWorkerThreads():
 
 def cleanDirectories():
 	my_env = os.environ.copy()
-	somestring = "rm -r ./testcases/*/build/* && rm -r .testcases/*/dapscompare-*/* && rm results.json"
+	somestring = "rm -r ./testcases/*/build/* && rm -r ./testcases/*/dapscompare-*/* && rm results.json"
 	process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 
 def spawnGui():
+	print("Starting Qt GUI")
 	app = QtGui.QApplication(sys.argv)
 	if configSettings.mode == 2:
 		ex = qtImageCompare(diffCollection.collection)

@@ -6,6 +6,7 @@ from modules.helpers import *
 from PIL import ImageDraw, Image
 from scipy.cluster.vq import kmeans2, whiten, kmeans
 import json
+import shutil
 
 gray_color_table = [QtGui.qRgb(i, i, i) for i in range(256)]
 
@@ -40,11 +41,13 @@ class qtImageCompare(QtGui.QMainWindow):
 		if imagesList == False:
 			# read results file
 			imagesList = json.loads(readFile("./results.json"))
+			imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
 		self.imagesList = imagesList
 		self.imagePos = 0
 		self.screenShape = QtGui.QDesktopWidget().screenGeometry()
-		#self.resize(self.screenShape.width(), self.screenShape.height())
 		self.resize(800,600)
+		self.setMinimumWidth(800)
+		self.setMinimumHeight(600)
 
 		# Left image (reference)
 		self.leftImage = QtGui.QLabel(self)
@@ -57,22 +60,39 @@ class qtImageCompare(QtGui.QMainWindow):
 		self.rightImage.setAlignment(QtCore.Qt.AlignCenter)
 		
 		# Next button
-		self.btnNext = QtGui.QPushButton('Next', self)
+		self.btnNext = QtGui.QPushButton('&Next', self)
 		self.btnNext.clicked.connect(self.nextImage)
 		
 		# Previous button
-		self.btnPrev = QtGui.QPushButton('Previous', self)
+		self.btnPrev = QtGui.QPushButton('&Previous', self)
 		self.btnPrev.clicked.connect(self.prevImage)
 
 		# Make reference button
-		self.btnMakeRef = QtGui.QPushButton('Make reference', self)
-		self.btnMakeRef.clicked.connect(self.prevImage)		
+		self.btnMakeRef = QtGui.QPushButton('Make &reference', self)
+		self.btnMakeRef.clicked.connect(self.makeRef)
+		self.btnMakeRef.setFixedWidth(140)
+		
+		self.statusText = QtGui.QLabel(self)
 
 		# load initial images
 		self.loadImage(imagesList[self.imagePos])
 		
 		self.show()
 	
+	@QtCore.pyqtSlot()
+	def makeRef(self):
+		shutil.copyfile(self.imagesList[self.imagePos][1],self.imagesList[self.imagePos][0])
+		if(len(self.imagesList) == 1):
+			self.imagesList=[]
+			writeFile("./results.json",json.dumps(self.imagesList))
+			sys.exit()
+		self.imagesList = self.imagesList[:self.imagePos] + self.imagesList[self.imagePos+1 :]
+		self.imagePos = self.imagePos - 1
+		if self.imagePos == -1:
+			self.imagePos = 0
+		self.loadImage(self.imagesList[self.imagePos])
+		writeFile("./results.json",json.dumps(self.imagesList))
+		
 	@QtCore.pyqtSlot()
 	def nextImage(self):
 		if self.imagePos == len(self.imagesList) - 1:
@@ -155,7 +175,9 @@ class qtImageCompare(QtGui.QMainWindow):
 		self.leftImage.setPixmap(self.pixmapLeft.scaled(
 			self.leftImage.width(), self.leftImage.height(),
 			QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
-			
+		
+		self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1])
+		self.setWindowTitle("dapscompare - "+self.imagesList[self.imagePos][1])
 		
 	def calcPositions(self):
 		width = self.width()
@@ -166,6 +188,9 @@ class qtImageCompare(QtGui.QMainWindow):
 		self.rightImage.resize(width/2,height-70)
 		self.btnNext.move(width - 120, height - 50)
 		self.btnPrev.move(width - 240, height - 50)
+		self.btnMakeRef.move(width - 400, height - 50)
+		self.statusText.move(20, height - 50)
+		self.statusText.setFixedWidth(width - 450)
 		
 	def resizeEvent(self,resizeEvent):
 		self.calcPositions()
@@ -180,14 +205,3 @@ class qtImageCompare(QtGui.QMainWindow):
 				self.rightImage.width(), self.rightImage.height(),
 				QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
 		return QtGui.QMainWindow.eventFilter(self, widget, event)
-		
-#def main():
-#	app = QtGui.QApplication(sys.argv)
-#	ex = qtImageCompare([['../testcases/hitchhiker/dapscompare-reference/page-1.png','../testcases/hitchhiker/dapscompare-comparison/page-1.png','../testcases/hitchhiker/dapscompare-result/page-1.png'],
-#						['../testcases/hitchhiker/dapscompare-reference/page-4.png','../testcases/hitchhiker/dapscompare-comparison/page-4.png','../testcases/hitchhiker/dapscompare-result/page-4.png'],
-#						['../testcases/hitchhiker/dapscompare-reference/page-38.png','../testcases/hitchhiker/dapscompare-comparison/page-38.png','../testcases/hitchhiker/dapscompare-result/page-38.png'],
-#						['../testcases/hitchhiker/dapscompare-reference/page-40.png','../testcases/hitchhiker/dapscompare-comparison/page-40.png','../testcases/hitchhiker/dapscompare-result/page-40.png']])
-#	sys.exit(app.exec_())
-
-#if __name__ == '__main__':
-#	main()

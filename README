@@ -37,6 +37,7 @@ clean		Remove all temporary files from working directories. Run
 === Parameters ===
 		
 --daps=''	Allows to pass any parameters to daps. The base command
-		is "daps -d DC-file pdf"
+		is "daps [X] -d DC-file pdf". Without this parameter,
+		--force will be added automatically.
 
 --no-gui	Don't start GUI when "compare" is finished.
