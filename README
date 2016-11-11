@@ -6,12 +6,12 @@ are available.
 
 === Requirements ===
 
-Besides daps, the python3 is required. Use pip or the packet manager of 
+Besides daps python3 is required. Use pip or the packet manager of 
 your operating system to install:
 - PyQt4
 - SciPy
 - Numpy
-- PILLOW (PIL fork)
+- Pillow (PIL fork)
 
 On openSUSE 42.2 run:
 zypper in python3-tk python3-qt4
@@ -41,6 +41,6 @@ clean		Remove all temporary files from working directories. Run
 
 --no-gui	Don't start GUI when "compare" is finished.
 
---testcases=''	Sets the path to the folder containing the test casses.
+--testcases=''	Sets the path to the folder containing the test cases.
 		If none is set, the current working directory is 
 		assumed.
