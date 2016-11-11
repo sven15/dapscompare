@@ -2,10 +2,10 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 import sys
 from scipy.misc import *
-
+from modules.helpers import *
 from PIL import ImageDraw, Image
-import matplotlib.pyplot as plt
 from scipy.cluster.vq import kmeans2, whiten, kmeans
+import json
 
 gray_color_table = [QtGui.qRgb(i, i, i) for i in range(256)]
 
@@ -32,11 +32,14 @@ def toQImage(im, copy=False):
 class qtImageCompare(QtGui.QMainWindow):
 	# list images format list of triple reference image path, comparison image path, difference map image path 
 	# [['reference path', 'comparison path', 'diffmap path'], ['reference path', 'comparison path', 'diffmap path'], [...] ...]
-	def __init__(self,imagesList):
+	def __init__(self,imagesList = False):
 		super(qtImageCompare, self).__init__()
 		self.initUI(imagesList)
         
 	def initUI(self,imagesList):
+		if imagesList == False:
+			# read results file
+			imagesList = json.loads(readFile("./results.json"))
 		self.imagesList = imagesList
 		self.imagePos = 0
 		self.screenShape = QtGui.QDesktopWidget().screenGeometry()
@@ -60,7 +63,11 @@ class qtImageCompare(QtGui.QMainWindow):
 		# Previous button
 		self.btnPrev = QtGui.QPushButton('Previous', self)
 		self.btnPrev.clicked.connect(self.prevImage)
-		
+
+		# Make reference button
+		self.btnMakeRef = QtGui.QPushButton('Make reference', self)
+		self.btnMakeRef.clicked.connect(self.prevImage)		
+
 		# load initial images
 		self.loadImage(imagesList[self.imagePos])
 		

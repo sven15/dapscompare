@@ -1,0 +1,42 @@
+=== Basics ===
+
+dapscompare searches in all sub folders of the testcases folder for DC
+files and builds PDFs from those. It starts as many threads as CPU cores
+are available.
+
+=== Requirements ===
+
+Besides daps, the python3 is required. Use pip or the packet manager of 
+your operating system to install:
+- PyQt4
+- SciPy
+- Numpy
+- PILLOW (PIL fork)
+- matplotlib
+
+On openSUSE 42.2 run:
+zypper in python3-tk python3-qt4
+pip3 install Pillow scipy numpy
+
+=== Commands ===
+
+reference	Builds all DC files contained in sub folders of the
+		testcases folder and stores images of all pages in
+		the dapscompare-reference folders.
+				
+compare		Builds all DC files contained in sub folders of the
+		testcases folder and subtracts them from the reference
+		images.
+		
+view		Don't build files, just view results of last run in GUI.
+
+clean		Remove all temporary files from working directories. Run
+		the clean command before you use reference for the first
+		time.
+		
+=== Parameters ===
+		
+--daps=''	Allows to pass any parameters to daps. The base command
+		is "daps -d DC-file pdf"
+
+--no-gui	Don't start GUI when "compare" is finished.
