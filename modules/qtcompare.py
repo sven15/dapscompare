@@ -33,18 +33,20 @@ def toQImage(im, copy=False):
 class qtImageCompare(QtGui.QMainWindow):
 	# list images format list of triple reference image path, comparison image path, difference map image path 
 	# [['reference path', 'comparison path', 'diffmap path'], ['reference path', 'comparison path', 'diffmap path'], [...] ...]
-	def __init__(self,imagesList = False):
+	def __init__(self, viewDirectory, imagesList = False):
 		super(qtImageCompare, self).__init__()
-		self.initUI(imagesList)
+		self.initUI(viewDirectory,imagesList)
+		
         
-	def initUI(self,imagesList):
+	def initUI(self,viewDirectory,imagesList):
+		self.viewDirectory = viewDirectory
 		if imagesList == False:
 			# read results file
-
-			if readFile("./results.json") == False:
+			imagesList = readFile(self.viewDirectory+"/results.json")
+			if imagesList == False:
 				print("Nothing to do.")
 				sys.exit()
-			imagesList = json.loads()
+			imagesList = json.loads(imagesList)
 			imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
 		self.imagesList = imagesList
 		self.imagePos = 0
@@ -88,14 +90,14 @@ class qtImageCompare(QtGui.QMainWindow):
 		shutil.copyfile(self.imagesList[self.imagePos][1],self.imagesList[self.imagePos][0])
 		if(len(self.imagesList) == 1):
 			self.imagesList=[]
-			writeFile("./results.json",json.dumps(self.imagesList))
+			writeFile(self.viewDirectory+"/results.json",json.dumps(self.imagesList))
 			sys.exit()
 		self.imagesList = self.imagesList[:self.imagePos] + self.imagesList[self.imagePos+1 :]
 		self.imagePos = self.imagePos - 1
 		if self.imagePos == -1:
 			self.imagePos = 0
 		self.loadImage(self.imagesList[self.imagePos])
-		writeFile("./results.json",json.dumps(self.imagesList))
+		writeFile(self.viewDirectory+"/results.json",json.dumps(self.imagesList))
 		
 	@QtCore.pyqtSlot()
 	def nextImage(self):

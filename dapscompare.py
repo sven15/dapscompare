@@ -35,8 +35,8 @@ class myThread (threading.Thread):
 			outputTerminal(self.name+" now working on "+testcase)
 			# create dapscompare target folders
 			for dapsfolder in ['/dapscompare-comparison','/dapscompare-reference','/dapscompare-result']:
-				if not os.path.exists("./testcases/"+testcase+dapsfolder):
-					os.makedirs("./testcases/"+testcase+dapsfolder)
+				if not os.path.exists(configSettings.directory+"/"+testcase+dapsfolder):
+					os.makedirs(configSettings.directory+"/"+testcase+dapsfolder)
 			# compile DC file to either reference or comparison folder, depending on mode
 			dapsCompilePDF(testcase)
 			if(configSettings.mode == 2):
@@ -45,38 +45,38 @@ class myThread (threading.Thread):
 
 def dapsCompilePDF(testcase):
 	# create dapscompare target folders
-	for dapsfolder in ['/dapscompare-comparison/pdf','/dapscompare-reference/pdf','/dapscompare-result/pdf']:
-		if not os.path.exists("./testcases/"+testcase+dapsfolder):
-			os.makedirs("./testcases/"+testcase+dapsfolder)
+	for targetfolder in ['/dapscompare-comparison/pdf','/dapscompare-reference/pdf','/dapscompare-result/pdf']:
+		if not os.path.exists(configSettings.directory+"/"+testcase+targetfolder):
+			os.makedirs(configSettings.directory+"/"+testcase+targetfolder)
 	# find DC files
-	for filename in os.listdir("./testcases/"+testcase):
+	for filename in os.listdir(configSettings.directory+"/"+testcase):
 		if(filename[0:2] == "DC"):
 			# run daps on dc files and create PDFs
 			my_env = os.environ.copy()
-			process = Popen(["cd ./testcases/"+testcase+" && /usr/bin/daps "+configSettings.dapsParam+" -d "+filename+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+			process = Popen(["cd "+configSettings.directory+"/"+testcase+" && /usr/bin/daps "+configSettings.dapsParam+" -d "+filename+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
 			
 			# convert all PDF pages into numbered images and place them in reference or comparison folder
 			if(configSettings.mode == 1):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/pdf/page-%03d.png"
+				somestring = "cd "+configSettings.directory+"/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-reference/pdf/page-%03d.png"
 			elif(configSettings.mode == 2):
-				somestring = "cd ./testcases/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/pdf/page-%03d.png"
+				somestring = "cd "+configSettings.directory+"/"+testcase+" && /usr/bin/convert -density 110 build/*/*.pdf -quality 100 -background white -alpha remove dapscompare-comparison/pdf/page-%03d.png"
 			process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			process.wait()
 	
 def runTestsPDF(testcase):
 	# run tests on images in reference and comparison folder
-	for filename in os.listdir("./testcases/"+testcase+"/dapscompare-comparison/pdf/"):
-		referencePath = "./testcases/"+testcase+"/dapscompare-reference/pdf/"+filename
-		comparisonPath = "./testcases/"+testcase+"/dapscompare-comparison/pdf/"+filename
-		diffPath = "./testcases/"+testcase+"/dapscompare-result/pdf/"+filename
+	for filename in os.listdir(configSettings.directory+"/"+testcase+"/dapscompare-comparison/pdf/"):
+		referencePath = configSettings.directory+"/"+testcase+"/dapscompare-reference/pdf/"+filename
+		comparisonPath = configSettings.directory+"/"+testcase+"/dapscompare-comparison/pdf/"+filename
+		diffPath = configSettings.directory+"/"+testcase+"/dapscompare-result/pdf/"+filename
 		imgRef = imread(referencePath)
 		imgComp = imread(comparisonPath)
 		imgDiff = imgRef - imgComp
 		global diffCollectionLock, diffCollection
 		if numpy.count_nonzero(imgDiff) > 0:
 			imsave(diffPath,imgDiff)
-			outputTerminal("Image "+"./testcases/"+testcase+"/dapscompare-comparison/pdf/"+filename+" has changed.")
+			outputTerminal("Image "+configSettings.directory+""+testcase+"/dapscompare-comparison/pdf/"+filename+" has changed.")
 			diffCollectionLock.acquire()
 			diffCollection.collection.append([referencePath, comparisonPath, diffPath])
 			diffCollectionLock.release()
@@ -99,7 +99,7 @@ class MyConfig:
 		self.mode = 0
 		
 		# usually show GUI after comparison
-		self.noGui = True
+		self.noGui = False
 		
 		self.dapsParam = "--force"
 		
@@ -119,7 +119,7 @@ class MyConfig:
 				f.close()
 				sys.exit()
 			elif parameter == "--no-gui":
-				self.noGui = False
+				self.noGui = True
 			elif parameter.startswith("--daps="):
 				self.dapsParam = parameter[7:]
 			elif parameter.startswith("--testcases=''"):
@@ -143,11 +143,12 @@ def spawnWorkerThreads():
 	global folders
 	folders = queue.Queue()
 		
-	for testcase in os.listdir('./testcases'):
-		print("Found test case: "+testcase)
-		foldersLock.acquire()
-		folders.put(testcase)
-		foldersLock.release()
+	for testcase in os.listdir(configSettings.directory):
+		if(os.path.isdir(configSettings.directory+"/"+testcase)):
+			print("Found test case: "+testcase)
+			foldersLock.acquire()
+			folders.put(testcase)
+			foldersLock.release()
 
 	for threadX in range(0,cpus):
 		thread = myThread(threadX, "Thread-"+str(threadX), threadX)
@@ -163,16 +164,16 @@ def spawnWorkerThreads():
 
 def cleanDirectories():
 	my_env = os.environ.copy()
-	somestring = "rm -r ./testcases/*/build/* && rm -r ./testcases/*/dapscompare-*/* && rm results.json"
+	somestring = "rm -r "+configSettings.directory+"/*/build/* && rm -r "+configSettings.directory+"/*/dapscompare-*/* && rm "+configSettings.directory+"results.json"
 	process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 
 def spawnGui():
 	print("Starting Qt GUI")
 	app = QtGui.QApplication(sys.argv)
 	if configSettings.mode == 2:
-		ex = qtImageCompare(diffCollection.collection)
+		ex = qtImageCompare(configSettings.directory, diffCollection.collection)
 	if configSettings.mode == 3:
-		ex = qtImageCompare()
+		ex = qtImageCompare(configSettings.directory)
 	sys.exit(app.exec_())
 		
 def main():
@@ -180,17 +181,17 @@ def main():
 	configSettings = MyConfig()
 	diffCollection = DiffCollector()
 	diffCollectionLock = threading.Lock()
-	
+
 	if configSettings.mode == 1 or configSettings.mode == 2:
 		spawnWorkerThreads()
 	
-	elif (configSettings.mode == 2 and not configSettings.noGui) or configSettings.mode == 3:
+	if (configSettings.mode == 2 and configSettings.noGui == False) or configSettings.mode == 3:
 		spawnGui()
 		
-	elif configSettings.mode == 4:
+	if configSettings.mode == 4:
 		cleanDirectories()
 		
-	else:
+	if configSettings.mode == 0:
 		print("Nothing to do. Use --help.")
 
 if __name__ == "__main__":
