@@ -122,7 +122,7 @@ class MyConfig:
 				self.noGui = True
 			elif parameter.startswith("--daps="):
 				self.dapsParam = parameter[7:]
-			elif parameter.startswith("--testcases=''"):
+			elif parameter.startswith("--testcases="):
 				self.directory = parameter[12:]
 
 class DiffCollector:
