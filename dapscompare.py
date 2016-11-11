@@ -74,8 +74,8 @@ def runTestsPDF(testcase):
 		imgComp = imread(comparisonPath)
 		imgDiff = imgRef - imgComp
 		global diffCollectionLock, diffCollection
-		imsave(diffPath,imgDiff)
 		if numpy.count_nonzero(imgDiff) > 0:
+			imsave(diffPath,imgDiff)
 			outputTerminal("Image "+"./testcases/"+testcase+"/dapscompare-comparison/pdf/"+filename+" has changed.")
 			diffCollectionLock.acquire()
 			diffCollection.collection.append([referencePath, comparisonPath, diffPath])
