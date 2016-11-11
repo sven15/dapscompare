@@ -12,7 +12,6 @@ your operating system to install:
 - SciPy
 - Numpy
 - PILLOW (PIL fork)
-- matplotlib
 
 On openSUSE 42.2 run:
 zypper in python3-tk python3-qt4
