@@ -1,8 +1,8 @@
 === Basics ===
 
 dapscompare searches in all sub folders of the testcases folder for DC
-files and builds PDFs from those. It starts as many threads as CPU cores
-are available.
+files and builds PDFs and HTML from those. It starts as many threads as
+CPU cores are available.
 
 === Requirements ===
 
@@ -44,3 +44,9 @@ clean		Remove all temporary files from working directories. Run
 --testcases=''	Sets the path to the folder containing the test cases.
 		If none is set, the current working directory is 
 		assumed.
+		
+--no-pdf	Do not build PDF files.
+
+--no-html	Do not build HTML files.
+
+--no-epub	Do not build EPUB files. !!! EPUB not available yet !!!

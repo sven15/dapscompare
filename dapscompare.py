@@ -124,6 +124,12 @@ class MyConfig:
 				self.dapsParam = parameter[7:]
 			elif parameter.startswith("--testcases="):
 				self.directory = parameter[12:]
+			elif parameter == "--no-pdf":
+				self.noPdf = True
+			elif parameter == "--no-html"
+				self.noHtml = True
+			elif parameter == "--no-epub"
+				self.noEpub = True
 
 class DiffCollector:
 	def __init__(self):
