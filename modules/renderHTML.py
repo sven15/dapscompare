@@ -10,7 +10,7 @@ class renderHTML():
 	
 	# get URL and pixel width as parameters. The width is only approximate
 	def __init__(self,pageUrl,pageWidth,pathTarget = False):
-		self.app = QApplication
+		app = QApplication(sys.argv)
 		self.qwPage = QWebPage()
 		#signal.signal(signal.SIGINT, signal.SIG_DFL)
 		self.finished = False
