@@ -13,3 +13,9 @@ def writeFile(path,content):
 	f = open(path,'w')
 	f.write(content)
 	f.close()
+
+def modeToName(mode):
+	if mode == 1:
+		return "dapscompare-reference"
+	if mode == 2:
+		return "dapscompare-comparison"

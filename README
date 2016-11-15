@@ -49,4 +49,4 @@ clean		Remove all temporary files from working directories. Run
 
 --no-html	Do not build HTML files.
 
---no-epub	Do not build EPUB files. !!! EPUB not available yet !!!
+--no-epub	Do not build EPUB files. *EPUB not available yet*

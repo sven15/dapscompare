@@ -11,14 +11,13 @@ class renderHTML():
 	
 	# get URL and pixel width as parameters. The width is only approximate
 	def __init__(self,pageUrl,pageWidth,pathTarget = False):
-		app = QApplication(sys.argv)
-		signal.signal(signal.SIGINT, signal.SIG_DFL)
+		#signal.signal(signal.SIGINT, signal.SIG_DFL)
 		self.finished = False
 		self.qwPage = QWebPage()
 		size = QSize()
 		size.setWidth(pageWidth)
 		self.qwPage.setViewportSize(size)
-		self.qwPage.connect(self.webpage, SIGNAL("loadFinished(bool)"), self.onLoadFinished)
+		self.qwPage.connect(self.qwPage, SIGNAL("loadFinished(bool)"), self.onLoadFinished)
 		self.qwPage.mainFrame().load(QUrl(pageUrl))
 
 	# do not call this function. it is called via a signal
@@ -37,7 +36,7 @@ class renderHTML():
 		self.wait()
 		if pathTarget == False:
 			return self.image
-		else
+		else:
 			return True
 
 	# is the image already finished? Only necessary if performance is important. it's also possible to check the self.finished property directly
