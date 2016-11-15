@@ -16,17 +16,31 @@ from modules.daps import daps
 from PyQt4 import QtGui, QtCore
 import json
 
-class myThread (QtCore.QThread):
+class myGuiThread(QtCore.QThread):
+	def __init__(self):
+		QtCore.QThread.__init__(self)
+		self.finished = False
+	def __del__(self):
+		self.wait()
+
+	def run(self):	
+		global app
+		app = QtGui.QApplication(sys.argv)
+		
+	def renderHtml():
+		qWebWorkers[self.counter].render("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
+		
+class myWorkThread (QtCore.QThread):
 	def __init__(self,threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
 		self.name = name
+		self.counter = counter
 		
 	def __del__(self):
 		self.wait()
 
 	def run(self):
-		# your logic here
 		outputTerminal("Starting "+self.name)
 		global foldersLock, folders
 		# we want the threads to keep running until the queue of test cases is empty
@@ -43,15 +57,23 @@ class myThread (QtCore.QThread):
 			
 			# compile DC files
 			daps(testcase,cfg.dapsParam,cfg.filetypes)
-			
-			# render results to images
-			for filetype in cfg.filetypes:
-				if filetype == 'pdf':
-					myRenderPdf = renderPDF(testcase+"build/*/*.pdf",1280,testcase+modeToName(cfg.mode)+"/"+filetype)
-				elif filetype == 'html':
-					myRenderHtml = renderHTML(testcase+"build/*/*.pdf",1280,testcase+modeToName(cfg.mode)+"/"+filetype)
-				elif filetype == 'epub':
-					pass
+			for build in os.listdir(testcase+"build"):
+				if(os.path.isdir(testcase+"build") and not build.startswith(".")):
+					# render results to images
+					for filetype in cfg.filetypes:
+						if filetype == 'pdf':
+							for filename in os.listdir(testcase+"build/"+build):
+								if(filename.endswith == ".pdf"):
+									myRenderPdf = renderPDF(testcase+"build/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
+						elif filetype == 'html':
+							for filename in os.listdir(testcase+"build/"+build+"/html/"+build+"/"):
+								if(filename.endswith(".html")):
+									myRenderHtml = renderHTML("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
+									while myRenderHtml.isFinished() == False:
+										pass
+									print("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype+" finished")
+						elif filetype == 'epub':
+							pass
 					
 			if(cfg.mode == 2):
 				runTestsPDF(testcase)
@@ -130,6 +152,14 @@ class DiffCollector:
 	def __init__(self):
 		self.collection = []
 
+def spawnGui():
+	print("Starting Qt GUI")
+	if cfg.mode == 2:
+		ex = qtImageCompare(cfg.directory, diffCollection.collection)
+	if cfg.mode == 3:
+		ex = qtImageCompare(cfg.directory)
+	sys.exit(app.exec_())
+
 def spawnWorkerThreads():
 	# get number of available cpus. 
 	# we want to compile as many test cases with daps at the same time 
@@ -139,6 +169,7 @@ def spawnWorkerThreads():
 	global foldersLock, outputLock
 	foldersLock = threading.Lock()
 	threads = []
+	qWebWorkers = []
 	outputLock = threading.Lock()
 
 	global folders
@@ -152,7 +183,7 @@ def spawnWorkerThreads():
 			foldersLock.release()
 
 	for threadX in range(0,cpus):
-		thread = myThread(threadX, "Thread-"+str(threadX), threadX)
+		thread = myWorkThread(threadX, "Thread-"+str(threadX), threadX)
 		thread.start()
 		threads.append(thread)
 
@@ -160,6 +191,7 @@ def spawnWorkerThreads():
 	for t in threads:
 		t.wait()
 	print("All threads finished.")
+	
 	if cfg.mode == 2:
 		writeFile("./results.json",json.dumps(diffCollection.collection))
 
@@ -168,18 +200,17 @@ def cleanDirectories():
 	somestring = "rm -r "+cfg.directory+"/*/build/* && rm -r "+cfg.directory+"/*/dapscompare-*/* && rm "+cfg.directory+"results.json"
 	process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 
-def spawnGui():
-	print("Starting Qt GUI")
-	
-	if cfg.mode == 2:
-		ex = qtImageCompare(cfg.directory, diffCollection.collection)
-	if cfg.mode == 3:
-		ex = qtImageCompare(cfg.directory)
-	sys.exit(app.exec_())
+
 		
 def main():
-	global app
-	app = QtGui.QApplication(sys.argv)
+	qtcoreapp = QtCore.QCoreApplication.instance()
+	global queueHtml, queueHtmlLock
+	queueHtml = queue.Queue()
+	queueHtmlLock = threading.Lock()
+	
+	#guiThread = myGuiThread()
+	#guiThread.run()
+	
 	
 	global cfg, diffCollection, diffCollectionLock
 	cfg = MyConfig()
@@ -188,6 +219,7 @@ def main():
 	
 	if cfg.mode == 1 or cfg.mode == 2:
 		spawnWorkerThreads()
+		#guiThread.finished = True
 	
 	if (cfg.mode == 2 and cfg.noGui == False) or cfg.mode == 3:
 		spawnGui()
