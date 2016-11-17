@@ -24,8 +24,13 @@ class daps:
 		# create dapscompare target folders
 		for filetype in self.filetypes:
 			for targetfolder in ['/dapscompare-comparison/','/dapscompare-reference/','/dapscompare-result/']:
+<<<<<<< HEAD
 				if not os.path.exists(self.testcase+targetfolder+filetype):
 					os.makedirs(self.testcase+targetfolder+filetype)
+=======
+				if not os.path.exists(self.testcase+targetfolder):
+					os.makedirs(self.testcase+targetfolder)
+>>>>>>> external-html2png
 
 	def compilePdf(self):
 		my_env = os.environ.copy()

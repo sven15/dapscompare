@@ -33,22 +33,16 @@ def toQImage(im, copy=False):
 class qtImageCompare(QtGui.QMainWindow):
 	# list images format list of triple reference image path, comparison image path, difference map image path 
 	# [['reference path', 'comparison path', 'diffmap path'], ['reference path', 'comparison path', 'diffmap path'], [...] ...]
-	def __init__(self, viewDirectory, imagesList = False):
+	def __init__(self, cfg, dta):
 		super(qtImageCompare, self).__init__()
-		self.initUI(viewDirectory,imagesList)
-		
+		self.initUI(cfg,dta)
         
-	def initUI(self,viewDirectory,imagesList):
-		self.viewDirectory = viewDirectory
-		if imagesList == False:
-			# read results file
-			imagesList = readFile(self.viewDirectory+"/results.json")
-			if imagesList == False:
-				print("Nothing to do.")
-				sys.exit()
-			imagesList = json.loads(imagesList)
-			imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
-		self.imagesList = imagesList
+	def initUI(self,cfg,dta):
+		self.viewDirectory = cfg.directory
+		self.cfg = cfg
+		imagesList = dta.imgDiffs
+		self.depHashes = dta.depHashes
+		self.imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
 		self.imagePos = 0
 		self.screenShape = QtGui.QDesktopWidget().screenGeometry()
 		self.resize(800,600)
@@ -79,6 +73,7 @@ class qtImageCompare(QtGui.QMainWindow):
 		self.btnMakeRef.setFixedWidth(140)
 		
 		self.statusText = QtGui.QLabel(self)
+		self.statusText.setFixedHeight(50)
 
 		# load initial images
 		self.loadImage(imagesList[self.imagePos])
@@ -90,14 +85,14 @@ class qtImageCompare(QtGui.QMainWindow):
 		shutil.copyfile(self.imagesList[self.imagePos][1],self.imagesList[self.imagePos][0])
 		if(len(self.imagesList) == 1):
 			self.imagesList=[]
-			writeFile(self.viewDirectory+"/results.json",json.dumps(self.imagesList))
+			writeFile(self.viewDirectory+self.cfg.resDiffFile,json.dumps(self.imagesList))
 			sys.exit()
 		self.imagesList = self.imagesList[:self.imagePos] + self.imagesList[self.imagePos+1 :]
 		self.imagePos = self.imagePos - 1
 		if self.imagePos == -1:
 			self.imagePos = 0
 		self.loadImage(self.imagesList[self.imagePos])
-		writeFile(self.viewDirectory+"/results.json",json.dumps(self.imagesList))
+		writeFile(self.viewDirectory+self.cfg.resDiffFile,json.dumps(self.imagesList))
 		
 	@QtCore.pyqtSlot()
 	def nextImage(self):
@@ -165,11 +160,14 @@ class qtImageCompare(QtGui.QMainWindow):
 			coords = (y-25, x-25, y+25, x+25)
 			draw.rectangle((coords), fill=None, outline="red")
 		
+		# convert nparray to image
 		comparisonImage = np.asarray(i)
 		
+		# convert image to qimage
 		self.pixmapLeft = QtGui.QPixmap.fromImage(toQImage(referenceImage))
 		self.pixmapRight = QtGui.QPixmap.fromImage(toQImage(comparisonImage))
 
+		# show image in labels
 		self.leftImage.setPixmap(self.pixmapLeft)
 		self.rightImage.setPixmap(self.pixmapRight)
 		
@@ -182,9 +180,11 @@ class qtImageCompare(QtGui.QMainWindow):
 			self.leftImage.width(), self.leftImage.height(),
 			QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
 		
-		self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1])
+		md5 = self.imagesList[self.imagePos][1].split("/")[-2]
+		self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+self.depHashes[md5])
 		self.setWindowTitle("dapscompare - "+self.imagesList[self.imagePos][1])
-		
+	
+	# calculate positions of elements in window
 	def calcPositions(self):
 		width = self.width()
 		height = self.height()
@@ -197,10 +197,12 @@ class qtImageCompare(QtGui.QMainWindow):
 		self.btnMakeRef.move(width - 400, height - 50)
 		self.statusText.move(20, height - 50)
 		self.statusText.setFixedWidth(width - 450)
-		
+	
+	# refresh positions in window when resizing
 	def resizeEvent(self,resizeEvent):
 		self.calcPositions()
-		
+	
+	# fixed image width and height when resizing
 	def eventFilter(self, widget, event):
 		if (event.type() == QtCore.QEvent.Resize and widget is self.leftImage):
 			self.leftImage.setPixmap(self.pixmapLeft.scaled(

@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
 
-import multiprocessing
-import threading
-import os
-import queue
-import sys
-from subprocess import check_output, Popen, PIPE
-from scipy.misc import *
-import numpy
-from modules.qtcompare import qtImageCompare, toQImage
-from modules.renderHTML import renderHTML
-from modules.renderPDF import renderPDF
-from modules.helpers import *
-from modules.daps import daps
-from PyQt4 import QtGui, QtCore
-import json
+import multiprocessing, threading, queue, os, sys, json, string, hashlib, shutil
 
+from scipy.misc import imsave, imread
+import numpy as np
+from PyQt4 import QtGui, QtCore
+
+from modules.qtcompare import qtImageCompare, toQImage
+from modules.renderers import renderHtml, renderPdf
+from modules.helpers import readFile, writeFile, modeToName
+from modules.daps import daps
+
+<<<<<<< HEAD
 class myGuiThread(QtCore.QThread):
 	def __init__(self):
 		QtCore.QThread.__init__(self)
@@ -31,6 +27,10 @@ class myGuiThread(QtCore.QThread):
 		qWebWorkers[self.counter].render("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
 		
 class myWorkThread (QtCore.QThread):
+=======
+# worker threads which compile the DC files and compare the results
+class myThread (QtCore.QThread):
+>>>>>>> external-html2png
 	def __init__(self,threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
@@ -41,8 +41,11 @@ class myWorkThread (QtCore.QThread):
 		self.wait()
 
 	def run(self):
+<<<<<<< HEAD
 		outputTerminal("Starting "+self.name)
 		global foldersLock, folders
+=======
+>>>>>>> external-html2png
 		# we want the threads to keep running until the queue of test cases is empty
 		while(True):
 			testcase = ""
@@ -57,6 +60,7 @@ class myWorkThread (QtCore.QThread):
 			
 			# compile DC files
 			daps(testcase,cfg.dapsParam,cfg.filetypes)
+<<<<<<< HEAD
 			for build in os.listdir(testcase+"build"):
 				if(os.path.isdir(testcase+"build") and not build.startswith(".")):
 					# render results to images
@@ -74,27 +78,67 @@ class myWorkThread (QtCore.QThread):
 									print("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype+" finished")
 						elif filetype == 'epub':
 							pass
+=======
+			
+			# render results to images
+			runRenderers(testcase)
+>>>>>>> external-html2png
 					
 			if(cfg.mode == 2):
-				runTestsPDF(testcase)
+				runTests(testcase)
 		outputTerminal(self.name+" finished")
-	
-def runTestsPDF(testcase):
+
+# calls the rendering modules
+def runRenderers(testcase):
 	for filetype in cfg.filetypes:
-		referencePath = testcase+"dapscompare-reference/"+filetype+"/"
-		comparisonPath = testcase+"dapscompare-comparison/"+filetype+"/"
-		diffPath = testcase+"dapscompare-result/"+filetype+"/"
+		if filetype == 'pdf':
+			folderName = testcase+modeToName(cfg.mode)+"/"+registerHash(filetype.upper())
+			if not os.path.exists(folderName):
+				os.makedirs(folderName)
+			myRenderPdf = renderPdf(testcase+"build/*/*.pdf",100,folderName)
+		elif filetype == 'html' and cfg.noGui == False:
+			for build in os.listdir(testcase+"build"):
+				if not build.startswith("."):
+					for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
+						for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
+							for width in cfg.htmlWidth:
+								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash(filetype.upper()+" w:"+str(width)+"px")+"/"
+								if not os.path.exists(folderName):
+									os.makedirs(folderName)
+								myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+		elif filetype == 'epub':
+			pass
+
+def registerHash(somestring):
+	# create md5sum of hash
+	md5 = hashlib.md5(somestring.encode('utf-8'))
+	# add md5sum and string to config and save to file in the end
+	dataCollectionLock.acquire()
+	dataCollection.depHashes[md5.hexdigest()] = somestring
+	dataCollectionLock.release()
+	return md5.hexdigest()
+
+# diff images of reference and compare run and save result
+def runTests(testcase):
+	for md5, descritpion in dataCollection.depHashes.items():
+		referencePath = testcase+"dapscompare-reference/"+md5+"/"
+		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
+		if not os.path.exists(referencePath):
+			continue
+		diffFolder = testcase+"dapscompare-result/"+md5+"/"
+		if not os.path.exists(diffFolder):
+			os.makedirs(diffFolder)
+
 		for filename in os.listdir(referencePath):
 			imgRef = imread(referencePath+filename)
 			imgComp = imread(comparisonPath+filename)
 			imgDiff = imgRef - imgComp
-			global diffCollectionLock, diffCollection
-			if numpy.count_nonzero(imgDiff) > 0:
-				imsave(diffPath+"/"+filename,imgDiff)
-				outputTerminal("Image "+cfg.directory+""+testcase+"dapscompare-comparison/pdf/"+filename+" has changed.")
-				diffCollectionLock.acquire()
-				diffCollection.collection.append([referencePath+filename, comparisonPath+filename, diffPath+filename])
-				diffCollectionLock.release()
+			if np.count_nonzero(imgDiff) > 0:
+				imsave(diffFolder+filename,imgDiff)
+				outputTerminal("Image "+comparisonPath+filename+" has changed.")
+				dataCollectionLock.acquire()
+				dataCollection.imgDiffs.append([referencePath+filename, comparisonPath+filename, diffFolder+filename])
+				dataCollectionLock.release()
 
 def outputTerminal(text):
 	global outputLock
@@ -104,6 +148,9 @@ def outputTerminal(text):
 
 class MyConfig:
 	def __init__(self):
+		self.resDiffFile = ".dapscompare-diff.json"
+		self.resHashFile = ".dapscompare-hash.json"
+		
 		# set standard values for all other needed parameters
 		self.directory = os.getcwd()+"/"
 		
@@ -114,11 +161,19 @@ class MyConfig:
 		self.mode = 0
 		
 		# usually show GUI after comparison
-		self.noGui = False
+		if "DISPLAY" in os.environ:
+			self.noGui = False
+		else:
+			self.noGui = True
 		
-		self.filetypes = ['pdf','html']
+		if self.noGui == True:
+			self.filetypes = ['pdf']
+		else:
+			self.filetypes = ['pdf','html']
 		
 		self.dapsParam = "--force"
+		
+		self.htmlWidth = [1280]
 		
 		# first read CLI parameters
 		for parameter in sys.argv:
@@ -147,10 +202,28 @@ class MyConfig:
 				self.filetypes.remove('html')
 			elif parameter == "--no-epub":
 				self.filetypes.remove('epub')
+			elif parameter.startswith("--html-width="):
+				self.htmlWidth = parameter[13:].split(",")
+			
 
-class DiffCollector:
+class DataCollector:
 	def __init__(self):
-		self.collection = []
+		# compare or reference mode, new empty diff list
+		self.imgDiffs = []
+		# view mode, load existing diff list
+		if cfg.mode == 3:
+			imagesList = readFile(cfg.directory+cfg.resDiffFile)
+			if imagesList == False:
+				print("Nothing to do.")
+				sys.exit()
+			self.imgDiffs = json.loads(imagesList)
+		
+		self.depHashes = {}
+		# hashes of dependencies like image width and filetype
+		fileContent = readFile(cfg.directory+cfg.resHashFile)		
+		if (fileContent != False and len(fileContent)>2):
+			self.depHashes = json.loads(fileContent)
+		
 
 def spawnGui():
 	print("Starting Qt GUI")
@@ -164,23 +237,25 @@ def spawnWorkerThreads():
 	# get number of available cpus. 
 	# we want to compile as many test cases with daps at the same time 
 	# as we can
+	
+	print("\n=== Parameters ===\n")
+	
 	cpus = multiprocessing.cpu_count()
-	print("CPUs: "+str(cpus))
+	print("Number of CPUs: "+str(cpus))
+	print("Working Directory: "+cfg.directory)
+	print("Building: "+str(cfg.filetypes))
 	global foldersLock, outputLock
 	foldersLock = threading.Lock()
 	threads = []
 	qWebWorkers = []
 	outputLock = threading.Lock()
-
-	global folders
-	folders = queue.Queue()
-		
-	for testcase in os.listdir(cfg.directory):
-		if(os.path.isdir(cfg.directory+"/"+testcase)):
-			print("Found test case: "+testcase)
-			foldersLock.acquire()
-			folders.put(cfg.directory+testcase+"/")
-			foldersLock.release()
+	
+	findTestcases()
+	
+	if folders.qsize() < cpus:
+		cpus = folders.qsize()
+	
+	print ("\n=== Creating "+str(cpus)+" Threads ===\n")
 
 	for threadX in range(0,cpus):
 		thread = myWorkThread(threadX, "Thread-"+str(threadX), threadX)
@@ -193,13 +268,53 @@ def spawnWorkerThreads():
 	print("All threads finished.")
 	
 	if cfg.mode == 2:
-		writeFile("./results.json",json.dumps(diffCollection.collection))
+		writeFile(cfg.directory+cfg.resDiffFile,json.dumps(dataCollection.imgDiffs))
+	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
+def findTestcases():
+	global folders,foldersLock
+	folders = queue.Queue()
+	foldersLock = threading.Lock()
+	n = 1
+	print("\n=== Test Cases ===\n")
+	for testcase in os.listdir(cfg.directory):
+		if(os.path.isdir(cfg.directory+"/"+testcase)):
+			print(str(n)+": "+testcase)
+			foldersLock.acquire()
+			folders.put(cfg.directory+testcase+"/")
+			foldersLock.release()
+			n = n + 1
+	
 def cleanDirectories():
+	# replace with in-python code and remove subprocess import
 	my_env = os.environ.copy()
-	somestring = "rm -r "+cfg.directory+"/*/build/* && rm -r "+cfg.directory+"/*/dapscompare-*/* && rm "+cfg.directory+"results.json"
-	process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+	findTestcases()
+	testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build']
+	while(True):
+		testcase = ""
+		foldersLock.acquire()
+		if(folders.empty() == False):
+			testcase = folders.get()
+		foldersLock.release()
+		if(testcase == ""):
+			break
+		print("cleaning "+testcase)
+		for subfolder in testcaseSubfolders:
+			try:
+				shutil.rmtree(testcase+"/"+subfolder)
+			except:
+				pass
+	print("cleaning dapscompare result files")
+	try:
+		os.remove(cfg.directory+cfg.resHashFile)
+	except:
+		pass
+	try:
+		os.remove(cfg.directory+cfg.resDiffFile)	
+	except:
+		pass
 
+<<<<<<< HEAD
 
 		
 def main():
@@ -211,11 +326,26 @@ def main():
 	#guiThread = myGuiThread()
 	#guiThread.run()
 	
+=======
+def spawnGui():
+	if cfg.noGui == False:
+		print("Starting Qt GUI")
+		ex = qtImageCompare(cfg,dataCollection)
+		sys.exit(app.exec_())
+		
+def main():
+	global app
+>>>>>>> external-html2png
 	
-	global cfg, diffCollection, diffCollectionLock
+	if "DISPLAY" in os.environ:
+		app = QtGui.QApplication(sys.argv)
+	else:
+		app = QtCore.QCoreApplication(sys.argv)
+		
+	global cfg, dataCollection, dataCollectionLock
 	cfg = MyConfig()
-	diffCollection = DiffCollector()
-	diffCollectionLock = threading.Lock()
+	dataCollection = DataCollector()
+	dataCollectionLock = threading.Lock()
 	
 	if cfg.mode == 1 or cfg.mode == 2:
 		spawnWorkerThreads()

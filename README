@@ -39,7 +39,9 @@ clean		Remove all temporary files from working directories. Run
 		is "daps [X] -d DC-file pdf". Without this parameter,
 		--force will be added automatically.
 
---no-gui	Don't start GUI when "compare" is finished.
+--no-gui	Don't start GUI when "compare" is finished. This flag
+		will be set automatically if no Display is available.
+		Without a display, rendering HTML is impossible.
 
 --testcases=''	Sets the path to the folder containing the test cases.
 		If none is set, the current working directory is 
@@ -47,6 +49,11 @@ clean		Remove all temporary files from working directories. Run
 		
 --no-pdf	Do not build PDF files.
 
---no-html	Do not build HTML files.
+--no-html	Do not build HTML files. Use this parameter when you are
+		not using an X Server which is required for rendering
+		HTML.
 
 --no-epub	Do not build EPUB files. *EPUB not available yet*
+
+--html-width=x	Render HTML page with a width of x pixels. x can also be
+		a list of comma separated values, i.e. 600,1280,1920
