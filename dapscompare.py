@@ -82,6 +82,7 @@ def runTests(testcase):
 		referencePath = testcase+"dapscompare-reference/"+md5+"/"
 		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
 		if not os.path.exists(referencePath):
+			print("No reference images for "+dataCollection.depHashes[md5])
 			continue
 		diffFolder = testcase+"dapscompare-result/"+md5+"/"
 		if not os.path.exists(diffFolder):
