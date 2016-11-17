@@ -11,26 +11,9 @@ from modules.renderers import renderHtml, renderPdf
 from modules.helpers import readFile, writeFile, modeToName
 from modules.daps import daps
 
-<<<<<<< HEAD
-class myGuiThread(QtCore.QThread):
-	def __init__(self):
-		QtCore.QThread.__init__(self)
-		self.finished = False
-	def __del__(self):
-		self.wait()
 
-	def run(self):	
-		global app
-		app = QtGui.QApplication(sys.argv)
-		
-	def renderHtml():
-		qWebWorkers[self.counter].render("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
-		
 class myWorkThread (QtCore.QThread):
-=======
 # worker threads which compile the DC files and compare the results
-class myThread (QtCore.QThread):
->>>>>>> external-html2png
 	def __init__(self,threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
@@ -41,11 +24,6 @@ class myThread (QtCore.QThread):
 		self.wait()
 
 	def run(self):
-<<<<<<< HEAD
-		outputTerminal("Starting "+self.name)
-		global foldersLock, folders
-=======
->>>>>>> external-html2png
 		# we want the threads to keep running until the queue of test cases is empty
 		while(True):
 			testcase = ""
@@ -60,29 +38,9 @@ class myThread (QtCore.QThread):
 			
 			# compile DC files
 			daps(testcase,cfg.dapsParam,cfg.filetypes)
-<<<<<<< HEAD
-			for build in os.listdir(testcase+"build"):
-				if(os.path.isdir(testcase+"build") and not build.startswith(".")):
-					# render results to images
-					for filetype in cfg.filetypes:
-						if filetype == 'pdf':
-							for filename in os.listdir(testcase+"build/"+build):
-								if(filename.endswith == ".pdf"):
-									myRenderPdf = renderPDF(testcase+"build/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
-						elif filetype == 'html':
-							for filename in os.listdir(testcase+"build/"+build+"/html/"+build+"/"):
-								if(filename.endswith(".html")):
-									myRenderHtml = renderHTML("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype)
-									while myRenderHtml.isFinished() == False:
-										pass
-									print("file://"+testcase+"build/"+build+"/html/"+build+"/"+filename,1280,testcase+modeToName(cfg.mode)+"/"+filetype+" finished")
-						elif filetype == 'epub':
-							pass
-=======
-			
+
 			# render results to images
 			runRenderers(testcase)
->>>>>>> external-html2png
 					
 			if(cfg.mode == 2):
 				runTests(testcase)
@@ -223,15 +181,6 @@ class DataCollector:
 		fileContent = readFile(cfg.directory+cfg.resHashFile)		
 		if (fileContent != False and len(fileContent)>2):
 			self.depHashes = json.loads(fileContent)
-		
-
-def spawnGui():
-	print("Starting Qt GUI")
-	if cfg.mode == 2:
-		ex = qtImageCompare(cfg.directory, diffCollection.collection)
-	if cfg.mode == 3:
-		ex = qtImageCompare(cfg.directory)
-	sys.exit(app.exec_())
 
 def spawnWorkerThreads():
 	# get number of available cpus. 
@@ -314,28 +263,15 @@ def cleanDirectories():
 	except:
 		pass
 
-<<<<<<< HEAD
-
-		
-def main():
-	qtcoreapp = QtCore.QCoreApplication.instance()
-	global queueHtml, queueHtmlLock
-	queueHtml = queue.Queue()
-	queueHtmlLock = threading.Lock()
-	
-	#guiThread = myGuiThread()
-	#guiThread.run()
-	
-=======
 def spawnGui():
 	if cfg.noGui == False:
 		print("Starting Qt GUI")
-		ex = qtImageCompare(cfg,dataCollection)
-		sys.exit(app.exec_())
+		if len(dataCollection.imgDiffs) > 0:
+			ex = qtImageCompare(cfg,dataCollection)
+			sys.exit(app.exec_())
 		
 def main():
 	global app
->>>>>>> external-html2png
 	
 	if "DISPLAY" in os.environ:
 		app = QtGui.QApplication(sys.argv)
