@@ -155,7 +155,7 @@ class MyConfig:
 			elif parameter == "clean":
 				self.mode = 4
 			elif parameter == "--help":
-				f = open('README', 'r')
+				f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'README'), 'r')
 				print(f.read())
 				f.close()
 				sys.exit()
