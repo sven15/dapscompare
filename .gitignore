@@ -1,3 +1,4 @@
 testcases
 results.json
 modules/__pycache__/
+dist/dapscompare-*.tar.bz2
