@@ -12,6 +12,9 @@
 
 import sys, signal, os, time, math
 
+from io import BytesIO
+from PIL import Image
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import QWebPage
@@ -44,7 +47,7 @@ class html2png():
 		self.qwPage.setViewportSize(self.qwPage.mainFrame().contentsSize())
 
 		# Paint this frame into an image
-		image = QImage(self.qwPage.viewportSize(), QImage.Format_ARGB32)
+		image = QImage(self.qwPage.viewportSize(), QImage.Format_RGB32)
 		painter = QPainter(image)
 		self.qwPage.mainFrame().render(painter)
 		painter.end()
@@ -53,13 +56,26 @@ class html2png():
 			numSplits = math.ceil(image.height() / targetHeight)
 			for x in range(0,numSplits):
 				start = (x) * targetHeight
-				#end = x * targetHeight - 1
-				print( 0, int(start), image.width(), targetHeight-1)
 				copy = image.copy( 0, int(start), image.width(), targetHeight-1)
-				copy.save(self.target[:-4]+"."+str(x)+".png")
+				#copy.save(self.target[:-4]+"."+str(x)+".png")
+				self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
 		else:
-			image.save(self.target)
+			#image.save(self.target)
+			self.saveOptPNG(image,self.target[:-4]+"."+str(x)+".png")
 		sys.exit(0)
+	
+	#optimize QImage PNG with PIL and save
+	def saveOptPNG(self,img,path):
+		buffer = QBuffer()
+		buffer.open(QIODevice.ReadWrite)
+		img.save(buffer, "PNG")
+
+		strio = BytesIO()
+		strio.write(buffer.data())
+		buffer.close()
+		strio.seek(0)
+		pil_im = Image.open(strio)
+		pil_im.save(path, "PNG", optimize=False,compress_level=9)
 
 app = QApplication(sys.argv)
 asdf = html2png(sys.argv[1],sys.argv[2],sys.argv[3])
