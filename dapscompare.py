@@ -46,6 +46,7 @@ class myWorkThread (QtCore.QThread):
 				break
 			outputTerminal(self.name+" now working on "+testcase)
 			
+			cleanDirectories(testcaseSubfolders = ['build'], rmConfigs=False)
 			# compile DC files
 			daps(testcase,cfg.dapsParam,cfg.filetypes)
 
@@ -257,25 +258,26 @@ def spawnWorkerThreads():
 		writeFile(cfg.directory+cfg.resDiffFile,json.dumps(dataCollection.imgDiffs))
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
-def findTestcases():
+def findTestcases(silent=False):
 	global folders,foldersLock
 	folders = queue.Queue()
 	foldersLock = threading.Lock()
 	n = 1
-	print("\n=== Test Cases ===\n")
+	if not silent:
+		print("\n=== Test Cases ===\n")
 	for testcase in os.listdir(cfg.directory):
 		if(os.path.isdir(cfg.directory+"/"+testcase)):
-			print(str(n)+": "+testcase)
+			if not silent:
+				print(str(n)+": "+testcase)
 			foldersLock.acquire()
 			folders.put(cfg.directory+testcase+"/")
 			foldersLock.release()
 			n = n + 1
 	
-def cleanDirectories():
+def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True):
 	# replace with in-python code and remove subprocess import
 	my_env = os.environ.copy()
-	findTestcases()
-	testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build']
+	findTestcases(silent=True)
 	while(True):
 		testcase = ""
 		foldersLock.acquire()
@@ -284,21 +286,20 @@ def cleanDirectories():
 		foldersLock.release()
 		if(testcase == ""):
 			break
-		print("cleaning "+testcase)
 		for subfolder in testcaseSubfolders:
 			try:
 				shutil.rmtree(testcase+"/"+subfolder)
 			except:
 				pass
-	print("cleaning dapscompare result files")
-	try:
-		os.remove(cfg.directory+cfg.resHashFile)
-	except:
-		pass
-	try:
-		os.remove(cfg.directory+cfg.resDiffFile)	
-	except:
-		pass
+	if rmConfigs:
+		try:
+			os.remove(cfg.directory+cfg.resHashFile)
+		except:
+			pass
+		try:
+			os.remove(cfg.directory+cfg.resDiffFile)	
+		except:
+			pass
 
 def spawnGui():
 	if cfg.noGui == False:
