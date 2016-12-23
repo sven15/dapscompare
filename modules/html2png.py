@@ -61,7 +61,7 @@ class html2png():
 				self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
 		else:
 			#image.save(self.target)
-			self.saveOptPNG(image,self.target[:-4]+"."+str(x)+".png")
+			self.saveOptPNG(image,self.target)
 		sys.exit(0)
 	
 	#optimize QImage PNG with PIL and save
