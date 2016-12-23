@@ -191,7 +191,10 @@ class qtImageCompare(QtGui.QMainWindow):
 			QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
 		
 		md5 = self.imagesList[self.imagePos][1].split("/")[-2]
-		self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+self.depHashes[md5])
+		parameters = ""
+		for item in self.depHashes[md5]:
+			parameters = parameters + item +": "+ self.depHashes[md5][item].upper()+", "
+		self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+parameters)
 		self.setWindowTitle("dapscompare - "+self.imagesList[self.imagePos][1])
 	
 	# calculate positions of elements in window

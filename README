@@ -58,6 +58,9 @@ clean		Remove all temporary files from working directories. Run
 --html-width=x	Render HTML page with a width of x pixels. x can also be
 		a list of comma separated values, i.e. 600,1280,1920
 
+--load-config	Load config file of past runs. This option overrides all
+		other file type and resolution options.
+
 === Version ===
 
 Version: dapscompare 0.1.0

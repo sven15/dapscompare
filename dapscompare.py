@@ -60,7 +60,7 @@ class myWorkThread (QtCore.QThread):
 def runRenderers(testcase):
 	for filetype in cfg.filetypes:
 		if filetype == 'pdf':
-			folderName = testcase+modeToName(cfg.mode)+"/"+registerHash(filetype.upper())
+			folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype})
 			if not os.path.exists(folderName):
 				os.makedirs(folderName)
 			myRenderPdf = renderPdf(testcase+"build/*/*.pdf",100,folderName)
@@ -70,19 +70,20 @@ def runRenderers(testcase):
 					for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
 						for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
 							for width in cfg.htmlWidth:
-								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash(filetype.upper()+" w:"+str(width)+"px")+"/"
+								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype, 'Width': str(width)})+"/"
 								if not os.path.exists(folderName):
 									os.makedirs(folderName)
 								myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
 		elif filetype == 'epub':
 			pass
 
-def registerHash(somestring):
+def registerHash(params):
 	# create md5sum of hash
-	md5 = hashlib.md5(somestring.encode('utf-8'))
+	hashstring = json.dumps(params, sort_keys=True)
+	md5 = hashlib.md5(hashstring.encode('utf-8'))
 	# add md5sum and string to config and save to file in the end
 	dataCollectionLock.acquire()
-	dataCollection.depHashes[md5.hexdigest()] = somestring
+	dataCollection.depHashes[md5.hexdigest()] = params
 	dataCollectionLock.release()
 	return md5.hexdigest()
 
@@ -117,33 +118,15 @@ def outputTerminal(text):
 
 class MyConfig:
 	def __init__(self):
-		self.resDiffFile = ".dapscompare-diff.json"
-		self.resHashFile = ".dapscompare-hash.json"
+
+		self.stdValues()
 		
-		# set standard values for all other needed parameters
-		self.directory = os.getcwd()+"/"
-		
-		# 1 = build reference
-		# 2 = build comparison and run tests (standard)
-		# 3 = view results of last run
-		# 4 = clean
-		self.mode = 0
-		
-		# usually show GUI after comparison
-		if "DISPLAY" in os.environ:
-			self.noGui = False
-		else:
-			self.noGui = True
-		
-		if self.noGui == True:
-			self.filetypes = ['pdf']
-		else:
-			self.filetypes = ['pdf','html']
-		
-		self.dapsParam = "--force"
-		
-		self.htmlWidth = [1280]
-		
+		self.cmdParams()
+
+		if self.loadConfigBool == True:
+			self.loadConfig()
+
+	def cmdParams(self):
 		# first read CLI parameters
 		for parameter in sys.argv:
 			if parameter == "compare":
@@ -173,7 +156,50 @@ class MyConfig:
 				self.filetypes.remove('epub')
 			elif parameter.startswith("--html-width="):
 				self.htmlWidth = parameter[13:].split(",")
-			
+			elif parameter == "--load-config":
+				self.loadConfigBool = True
+
+	def stdValues(self):
+		self.resDiffFile = ".dapscompare-diff.json"
+		self.resHashFile = ".dapscompare-hash.json"
+
+		# set standard values for all other needed parameters
+		self.directory = os.getcwd()+"/"
+
+		# 1 = build reference
+		# 2 = build comparison and run tests (standard)
+		# 3 = view results of last run
+		# 4 = clean
+		self.mode = 0
+
+		# usually show GUI after comparison
+		if "DISPLAY" in os.environ:
+			self.noGui = False
+		else:
+			self.noGui = True
+
+		if self.noGui == True:
+			self.filetypes = ['pdf']
+		else:
+			self.filetypes = ['pdf','html']
+
+		self.htmlWidth = [1280]
+
+		self.dapsParam = "--force"
+
+		self.loadConfigBool = False
+
+	def loadConfig(self):
+		content = readFile(self.directory+"/"+self.resHashFile)
+		if content:
+			self.filetypes = []
+			content = json.loads(content)
+			for hashsum in content:
+				if content[hashsum]['Type'] not in self.filetypes:
+					self.filetypes.append(content[hashsum]['Type'])
+				if content[hashsum]['Type'] == "html":
+					if int(content[hashsum]['Width']) not in self.htmlWidth:
+						self.htmlWidth.append(int(content[hashsum]['Width']))
 
 class DataCollector:
 	def __init__(self):
