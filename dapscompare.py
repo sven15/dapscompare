@@ -93,6 +93,7 @@ def runTests(testcase):
 	for md5, descritpion in dataCollection.depHashes.items():
 		referencePath = testcase+"dapscompare-reference/"+md5+"/"
 		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
+		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False)
 		if not os.path.exists(referencePath):
 			print("No reference images for "+dataCollection.depHashes[md5])
 			continue
@@ -204,6 +205,9 @@ class MyConfig:
 
 class DataCollector:
 	def __init__(self):
+		#if reference and comparison differ in number of pictures, store this here
+		self.diffNumPages = []
+
 		# compare or reference mode, new empty diff list
 		self.imgDiffs = []
 		# view mode, load existing diff list
@@ -212,10 +216,10 @@ class DataCollector:
 			if imagesList == False:
 				print("Nothing to do.")
 				sys.exit()
-			self.imgDiffs = json.loads(imagesList)
-		
-		self.depHashes = {}
+			self.imgDiffs, self.diffNumPages = json.loads(imagesList)
+
 		# hashes of dependencies like image width and filetype
+		self.depHashes = {}
 		fileContent = readFile(cfg.directory+cfg.resHashFile)		
 		if (fileContent != False and len(fileContent)>2):
 			self.depHashes = json.loads(fileContent)
@@ -231,8 +235,8 @@ def spawnWorkerThreads():
 	print("Number of CPUs: "+str(cpus))
 	print("Working Directory: "+cfg.directory)
 	print("Building: "+str(cfg.filetypes))
-	global foldersLock, outputLock
-	foldersLock = threading.Lock()
+	global outputLock
+	
 	threads = []
 	qWebWorkers = []
 	outputLock = threading.Lock()
@@ -255,12 +259,13 @@ def spawnWorkerThreads():
 	print("All threads finished.")
 	
 	if cfg.mode == 2:
-		writeFile(cfg.directory+cfg.resDiffFile,json.dumps(dataCollection.imgDiffs))
+		writeFile(cfg.directory+cfg.resDiffFile,json.dumps(dataCollection.imgDiffs, dataCollection.diffNumPages))
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
 def findTestcases(silent=False):
 	global folders,foldersLock
 	folders = queue.Queue()
+	foldersLock = threading.Lock()
 	n = 1
 	if not silent:
 		print("\n=== Test Cases ===\n")
@@ -275,11 +280,16 @@ def findTestcases(silent=False):
 	
 def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False):
 	# replace with in-python code and remove subprocess import
+	global foldersLock
 	my_env = os.environ.copy()
 	if testcase == False:
-		findTestcases(silent=True)
+		useQueues = True
+	else:
+		useQueues = False
+	if useQueues:
+		findTestcases(silent=False)
 	while(True):
-		if testcase == False:
+		if useQueues:
 			foldersLock.acquire()
 			if(folders.empty() == False):
 				testcase = folders.get()
