@@ -235,8 +235,8 @@ def spawnWorkerThreads():
 	print("Number of CPUs: "+str(cpus))
 	print("Working Directory: "+cfg.directory)
 	print("Building: "+str(cfg.filetypes))
-	global foldersLock, outputLock
-	foldersLock = threading.Lock()
+	global outputLock
+	
 	threads = []
 	qWebWorkers = []
 	outputLock = threading.Lock()
@@ -265,6 +265,7 @@ def spawnWorkerThreads():
 def findTestcases(silent=False):
 	global folders,foldersLock
 	folders = queue.Queue()
+	foldersLock = threading.Lock()
 	n = 1
 	if not silent:
 		print("\n=== Test Cases ===\n")
@@ -279,11 +280,16 @@ def findTestcases(silent=False):
 	
 def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False):
 	# replace with in-python code and remove subprocess import
+	global foldersLock
 	my_env = os.environ.copy()
 	if testcase == False:
-		findTestcases(silent=True)
+		useQueues = True
+	else:
+		useQueues = False
+	if useQueues:
+		findTestcases(silent=False)
 	while(True):
-		if testcase == False:
+		if useQueues:
 			foldersLock.acquire()
 			if(folders.empty() == False):
 				testcase = folders.get()
