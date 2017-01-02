@@ -46,7 +46,7 @@ class myWorkThread (QtCore.QThread):
 				break
 			outputTerminal(self.name+" now working on "+testcase)
 			
-			cleanDirectories(testcaseSubfolders = ['build'], rmConfigs=False)
+			cleanDirectories(testcaseSubfolders = ['build'], rmConfigs=False, testcase=testcase)
 			# compile DC files
 			daps(testcase,cfg.dapsParam,cfg.filetypes)
 
@@ -162,8 +162,8 @@ class MyConfig:
 				self.loadConfigBool = True
 
 	def stdValues(self):
-		self.resDiffFile = ".dapscompare-diff.json"
-		self.resHashFile = ".dapscompare-hash.json"
+		self.resDiffFile = "dapscompare-diff.json"
+		self.resHashFile = "dapscompare-hash.json"
 
 		# set standard values for all other needed parameters
 		self.directory = os.getcwd()+"/"
@@ -265,7 +265,6 @@ def spawnWorkerThreads():
 def findTestcases(silent=False):
 	global folders,foldersLock
 	folders = queue.Queue()
-	foldersLock = threading.Lock()
 	n = 1
 	if not silent:
 		print("\n=== Test Cases ===\n")
@@ -278,16 +277,17 @@ def findTestcases(silent=False):
 			foldersLock.release()
 			n = n + 1
 	
-def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True):
+def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False):
 	# replace with in-python code and remove subprocess import
 	my_env = os.environ.copy()
-	findTestcases(silent=True)
+	if testcase == False:
+		findTestcases(silent=True)
 	while(True):
-		testcase = ""
-		foldersLock.acquire()
-		if(folders.empty() == False):
-			testcase = folders.get()
-		foldersLock.release()
+		if testcase == False:
+			foldersLock.acquire()
+			if(folders.empty() == False):
+				testcase = folders.get()
+			foldersLock.release()
 		if(testcase == ""):
 			break
 		for subfolder in testcaseSubfolders:
@@ -296,6 +296,7 @@ def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-
 				shutil.rmtree(testcase+"/"+subfolder)
 			except:
 				pass
+		testcase = ""
 	if rmConfigs:
 		try:
 			os.remove(cfg.directory+cfg.resHashFile)
