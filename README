@@ -1,21 +1,26 @@
 === Basics ===
 
-dapscompare searches in all sub folders of the testcases folder for DC
+dapscompare is a tool for comparing documentation output. It has two main
+modes:
+- Reference mode: build the initial set of reference images
+- Compare mode: build a set of images that can be compared to the reference set
+
+dapscompare searches in all subdirectories of the testcases folder for DC
 files and builds PDFs and HTML from those. It starts as many threads as
-CPU cores are available.
+there are CPU cores available.
 
 === Requirements ===
 
-Besides daps python3 is required. Use pip or the packet manager of 
-your operating system to install:
+dapscompare requires DAPS and Python 3. Additionally, use pip or the package
+manager of your operating system to install:
 - PyQt4
 - SciPy
 - Numpy
 - Pillow (PIL fork)
 
-On openSUSE 42.2 run:
-zypper in python3-tk python3-qt4
-pip3 install Pillow scipy numpy
+On openSUSE 42.2, run:
+# zypper in python3-tk python3-qt4
+# pip3 install Pillow scipy numpy
 
 === Commands ===
 
