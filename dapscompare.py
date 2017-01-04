@@ -74,7 +74,8 @@ def runRenderers(testcase):
 								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype, 'Width': str(width)})+"/"
 								if not os.path.exists(folderName):
 									os.makedirs(folderName)
-								myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+								if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
+									myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
 		elif filetype == 'epub':
 			pass
 
@@ -88,17 +89,26 @@ def registerHash(params):
 	dataCollectionLock.release()
 	return md5.hexdigest()
 
+def listFiles(folder):
+	result = []
+	for item in os.listdir(folder):
+		if os.path.isfile(folder+item):
+			result.append(item)
+	return result
+
 # diff images of reference and compare run and save result
 def runTests(testcase):
 	for md5, description in dataCollection.depHashes.items():
 		referencePath = testcase+"dapscompare-reference/"+md5+"/"
 		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
-		numRefImgs = len([name for name in referencePath if os.path.isfile(name)])
-		numComImgs = len([name for name in comparisonPath if os.path.isfile(name)])
-		if not numRefImgs - numComImgs == 0:
+		numRefImgs = len(listFiles(referencePath))
+		numComImgs = len(listFiles(comparisonPath))
+		if (numRefImgs - numComImgs) != 0 and numRefImgs != 0:
 			dataCollectionLock.acquire()
 			dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
 			dataCollectionLock.release()
+			print("D")
+			continue
 		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
 		if not os.path.exists(referencePath):
 			print("No reference images for "+dataCollection.depHashes[md5])
@@ -270,6 +280,7 @@ def spawnWorkerThreads():
 	
 	if cfg.mode == 2:
 		writeFile(cfg.directory+cfg.resDiffFile,json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
+		print(dataCollection.diffNumPages)
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
 def queueTestcases(silent=False):
@@ -293,7 +304,6 @@ def findTestcases():
 			yield testcase
 
 def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False, keepDirs = False):
-	# replace with in-python code and remove subprocess import
 	global foldersLock
 	if testcase == False:
 		testcases = findTestcases()

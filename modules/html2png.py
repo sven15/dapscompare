@@ -52,16 +52,11 @@ class html2png():
 		self.qwPage.mainFrame().render(painter)
 		painter.end()
 		targetHeight = self.width * 1.4142
-		if image.height() > targetHeight:
-			numSplits = math.ceil(image.height() / targetHeight)
-			for x in range(0,numSplits):
-				start = (x) * targetHeight
-				copy = image.copy( 0, int(start), image.width(), targetHeight-1)
-				#copy.save(self.target[:-4]+"."+str(x)+".png")
-				self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
-		else:
-			#image.save(self.target)
-			self.saveOptPNG(image,self.target)
+		numSplits = math.ceil(image.height() / targetHeight)
+		for x in range(0,numSplits):
+			start = (x) * targetHeight
+			copy = image.copy( 0, int(start), image.width(), targetHeight-1)
+			self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
 		sys.exit(0)
 	
 	#optimize QImage PNG with PIL and save

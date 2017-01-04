@@ -17,6 +17,7 @@ from PIL import ImageDraw, Image
 from scipy.cluster.vq import kmeans2, whiten, kmeans
 import json
 import shutil
+import time
 
 gray_color_table = [QtGui.qRgb(i, i, i) for i in range(256)]
 
@@ -158,13 +159,14 @@ class qtImageCompare(QtGui.QMainWindow):
 		result = kmeans(nonzeroCoords.astype(float),1)
 		n = 0
 		
+		timeout = time.time() + 3
 		# iterate k-means until the distortion is lower than 50
 		while(result[1] > 15):
 			n = n + 1
 			result = kmeans(nonzeroCoords.astype(float),n)
 			
-			#not more than 10 k-means
-			if n > 10:
+			#not more than 10 k-means or 3 seconds
+			if n > 10 or time.time() > timeout:
 				break
 		width = int(result[1])+10
 		# draw boxes around all pixel groups
