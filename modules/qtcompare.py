@@ -162,12 +162,16 @@ class qtImageCompare(QtGui.QMainWindow):
 		while(result[1] > 15):
 			n = n + 1
 			result = kmeans(nonzeroCoords.astype(float),n)
-		
+			
+			#not more than 10 k-means
+			if n > 10:
+				break
+		width = int(result[1])+10
 		# draw boxes around all pixel groups
 		for x, y in result[0]:
 			x = x.astype(np.int64)
 			y = y.astype(np.int64)
-			coords = (y-25, x-25, y+25, x+25)
+			coords = (y-width, x-width, y+width, x+width)
 			draw.rectangle((coords), fill=None, outline="red")
 		
 		# convert nparray to image

@@ -90,10 +90,16 @@ def registerHash(params):
 
 # diff images of reference and compare run and save result
 def runTests(testcase):
-	for md5, descritpion in dataCollection.depHashes.items():
+	for md5, description in dataCollection.depHashes.items():
 		referencePath = testcase+"dapscompare-reference/"+md5+"/"
 		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
-		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False)
+		numRefImgs = len([name for name in referencePath if os.path.isfile(name)])
+		numComImgs = len([name for name in comparisonPath if os.path.isfile(name)])
+		if not numRefImgs - numComImgs == 0:
+			dataCollectionLock.acquire()
+			dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
+			dataCollectionLock.release()
+		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
 		if not os.path.exists(referencePath):
 			print("No reference images for "+dataCollection.depHashes[md5])
 			continue
@@ -104,14 +110,18 @@ def runTests(testcase):
 		for filename in os.listdir(referencePath):
 			imgRef = imread(referencePath+filename)
 			imgComp = imread(comparisonPath+filename)
-			imgDiff = imgRef - imgComp
-			if np.count_nonzero(imgDiff) > 0:
-				imsave(diffFolder+filename,imgDiff)
-				outputTerminal("Image "+comparisonPath+filename+" has changed.")
+			try:
+				imgDiff = imgRef - imgComp
+				if np.count_nonzero(imgDiff) > 0:
+					imsave(diffFolder+filename,imgDiff)
+					outputTerminal("Image "+comparisonPath+filename+" has changed.")
+					dataCollectionLock.acquire()
+					dataCollection.imgDiffs.append([referencePath+filename, comparisonPath+filename, diffFolder+filename])
+					dataCollectionLock.release()
+			except:
 				dataCollectionLock.acquire()
-				dataCollection.imgDiffs.append([referencePath+filename, comparisonPath+filename, diffFolder+filename])
+				dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
 				dataCollectionLock.release()
-
 def outputTerminal(text):
 	global outputLock
 	outputLock.acquire()
@@ -241,7 +251,7 @@ def spawnWorkerThreads():
 	qWebWorkers = []
 	outputLock = threading.Lock()
 	
-	findTestcases()
+	queueTestcases()
 	
 	if folders.qsize() < cpus:
 		cpus = folders.qsize()
@@ -259,50 +269,46 @@ def spawnWorkerThreads():
 	print("All threads finished.")
 	
 	if cfg.mode == 2:
-		writeFile(cfg.directory+cfg.resDiffFile,json.dumps(dataCollection.imgDiffs, dataCollection.diffNumPages))
+		writeFile(cfg.directory+cfg.resDiffFile,json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
-def findTestcases(silent=False):
+def queueTestcases(silent=False):
 	global folders,foldersLock
 	folders = queue.Queue()
 	foldersLock = threading.Lock()
-	n = 1
 	if not silent:
 		print("\n=== Test Cases ===\n")
+	n = 1
+	foldersLock.acquire()
+	for testcase in findTestcases():
+		if not silent:
+			print(str(n)+". "+testcase)
+			n = n + 1
+		folders.put(cfg.directory+testcase+"/")
+	foldersLock.release()
+
+def findTestcases():
 	for testcase in os.listdir(cfg.directory):
 		if(os.path.isdir(cfg.directory+"/"+testcase)):
-			if not silent:
-				print(str(n)+": "+testcase)
-			foldersLock.acquire()
-			folders.put(cfg.directory+testcase+"/")
-			foldersLock.release()
-			n = n + 1
-	
-def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False):
+			yield testcase
+
+def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False, keepDirs = False):
 	# replace with in-python code and remove subprocess import
 	global foldersLock
-	my_env = os.environ.copy()
 	if testcase == False:
-		useQueues = True
+		testcases = findTestcases()
 	else:
-		useQueues = False
-	if useQueues:
-		findTestcases(silent=False)
-	while(True):
-		if useQueues:
-			foldersLock.acquire()
-			if(folders.empty() == False):
-				testcase = folders.get()
-			foldersLock.release()
-		if(testcase == ""):
-			break
+		testcases = [testcase]
+		
+	for testcase in testcases:
 		for subfolder in testcaseSubfolders:
-			print(testcase+"/"+subfolder)
 			try:
-				shutil.rmtree(testcase+"/"+subfolder)
+				if keepDirs:
+					shutil.rmtree(testcase+"/"+subfolder+"/*")
+				else:
+					shutil.rmtree(testcase+"/"+subfolder)
 			except:
 				pass
-		testcase = ""
 	if rmConfigs:
 		try:
 			os.remove(cfg.directory+cfg.resHashFile)
@@ -335,7 +341,6 @@ def main():
 	
 	if cfg.mode == 1 or cfg.mode == 2:
 		spawnWorkerThreads()
-		#guiThread.finished = True
 	
 	if (cfg.mode == 2 and cfg.noGui == False) or cfg.mode == 3:
 		spawnGui()
