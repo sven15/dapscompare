@@ -10,7 +10,7 @@
 # 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import multiprocessing, threading, queue, os, sys, json, string, hashlib, shutil
+import multiprocessing, threading, queue, os, sys, json, string, hashlib, shutil, zipfile
 
 from scipy.misc import imsave, imread
 import numpy as np
@@ -57,38 +57,67 @@ class myWorkThread (QtCore.QThread):
 				runTests(testcase)
 		outputTerminal(self.name+" finished")
 
-# calls the rendering modules
+#find the PDF files in build folder and convert to png
+def preparePdf(testcase):
+	folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'pdf'})
+	if not os.path.exists(folderName):
+		os.makedirs(folderName)
+	myRenderPdf = renderPdf(testcase+"build/*/*.pdf",100,folderName)
+
+#find HTML files in build folder and convert to png
+def prepareHtml(testcase):
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
+				for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
+					for width in cfg.htmlWidth:
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'html', 'Width': str(width)})+"/"
+						if not os.path.exists(folderName):
+							os.makedirs(folderName)
+						if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
+							myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+
+#find Single HTML files in build folder and convert to png
+def prepareSingleHtml(testcase):
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for htmlBuild in os.listdir(testcase+"build/"+build+"/single-html/"):
+				for htmlFile in os.listdir(testcase+"build/"+build+"/single-html/"+htmlBuild):
+					for width in cfg.htmlWidth:
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'single-html', 'Width': str(width)})+"/"
+						if not os.path.exists(folderName):
+							os.makedirs(folderName)
+						if not os.path.islink(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile):
+							myRenderHtml = renderHtml(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile,width,folderName)
+
+#find EPUB files in build folder and convert to png
+def prepareEpub(testcase):
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for epub in os.listdir(testcase+"build/"+build+"/"):
+				if epub.endswith(".epub"):
+					os.makedirs(testcase+"build/"+build+"/"+epub[0:-5]+"/")
+					zip_ref = zipfile.ZipFile(testcase+"build/"+build+"/"+epub, 'r')
+					zip_ref.extractall(testcase+"build/"+build+"/"+epub[0:-5]+"/")
+					zip_ref.close()
+					for htmlFile in os.listdir(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"):
+						for width in cfg.htmlWidth:
+							folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'epub', 'Width': str(width)})+"/"
+							if not os.path.exists(folderName):
+								os.makedirs(folderName)
+							if not os.path.islink(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile):
+								myRenderHtml = renderHtml(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile,width,folderName)
+# prepare for file types and then call the appropriate rendering modules
 def runRenderers(testcase):
 	for filetype in cfg.filetypes:
 		if filetype == 'pdf':
-			folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype})
-			if not os.path.exists(folderName):
-				os.makedirs(folderName)
-			myRenderPdf = renderPdf(testcase+"build/*/*.pdf",100,folderName)
+			preparePdf(testcase)
 		elif filetype == 'html' and cfg.noGui == False:
-			for build in os.listdir(testcase+"build"):
-				if not build.startswith("."):
-					for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
-						for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
-							for width in cfg.htmlWidth:
-								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype, 'Width': str(width)})+"/"
-								if not os.path.exists(folderName):
-									os.makedirs(folderName)
-								if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
-									myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+			prepareHtml(testcase)
 		elif filetype == 'single-html' and cfg.noGui == False:
-			for build in os.listdir(testcase+"build"):
-				if not build.startswith("."):
-					for htmlBuild in os.listdir(testcase+"build/"+build+"/single-html/"):
-						for htmlFile in os.listdir(testcase+"build/"+build+"/single-html/"+htmlBuild):
-							for width in cfg.htmlWidth:
-								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype, 'Width': str(width)})+"/"
-								if not os.path.exists(folderName):
-									os.makedirs(folderName)
-								if not os.path.islink(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile):
-									myRenderHtml = renderHtml(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile,width,folderName)
-		elif filetype == 'epub':
-			pass
+			prepareSingleHtml(testcase)
+		elif filetype == 'epub' and cfg.noGui == False:
+			prepareEpub(testcase)
 
 def registerHash(params):
 	# create md5sum of hash

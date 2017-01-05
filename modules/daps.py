@@ -57,7 +57,9 @@ class daps:
 
 	def compileEpub(self):
 		my_env = os.environ.copy()
-		self.procEpub = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" epub"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+		for dcFile in self.dcFiles:
+			self.procEpub = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" epub"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+			self.procEpub.wait()
 
 	def compileAllWait(self):
 		if 'pdf' in self.filetypes:
@@ -66,3 +68,5 @@ class daps:
 			self.compileHtml()
 		if 'single-html' in self.filetypes:
 			self.compileSingleHtml()
+		if 'epub' in self.filetypes:
+			self.compileEpub()
