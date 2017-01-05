@@ -40,7 +40,8 @@ def hashPath(path):
 			f1 = open(path, 'rb')
 		except:
 			f1.close()
-			continue
+# Following line commented -- dapscompare does not run otherwise. Not sure about the original intention.
+#			continue
 		while 1:
 			buf = f1.read(4096)
 			if not buf : break
