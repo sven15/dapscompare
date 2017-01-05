@@ -18,7 +18,7 @@ from PyQt4 import QtGui, QtCore
 
 from modules.qtcompare import qtImageCompare, toQImage
 from modules.renderers import renderHtml, renderPdf
-from modules.helpers import readFile, writeFile, modeToName
+from modules.helpers import readFile, writeFile, modeToName, hashPath
 from modules.daps import daps
 
 

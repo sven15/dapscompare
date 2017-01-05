@@ -29,3 +29,38 @@ def modeToName(mode):
 		return "dapscompare-reference"
 	if mode == 2:
 		return "dapscompare-comparison"
+
+def hashPath(path, verbose=0):
+	import hashlib, os
+	SHAhash = hashlib.sha1()
+	if not os.path.exists (path):
+		return False
+	if os.path.isfile(path):
+		try:
+			f1 = open(path, 'rb')
+		except:
+			f1.close()
+			continue
+		while 1:
+			buf = f1.read(4096)
+			if not buf : break
+			SHAhash.update(hashlib.sha1(buf).hexdigest())
+		f1.close()
+	else:
+		try:
+			for root, dirs, files in os.walk(path):
+				for names in files:
+					filepath = os.path.join(root,names)
+					try:
+						f1 = open(filepath, 'rb')
+					except:
+						f1.close()
+						continue
+					while 1:
+						buf = f1.read(4096)
+						if not buf : break
+						SHAhash.update(hashlib.sha1(buf).hexdigest())
+					f1.close()
+		except:
+			pass
+	return SHAhash.hexdigest()
