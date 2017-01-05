@@ -319,10 +319,8 @@ def spawnWorkerThreads():
 	for t in threads:
 		t.wait()
 	print("All threads finished.")
-	
 	if cfg.mode == 2:
 		writeFile(cfg.directory+cfg.resDiffFile,json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
-		#print(dataCollection.diffNumPages)
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
 def queueTestcases(silent=False):
@@ -374,10 +372,19 @@ def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-
 def spawnGui():
 	if cfg.noGui == False:
 		print("Starting Qt GUI")
-		if len(dataCollection.imgDiffs) > 0:
+		if len(dataCollection.imgDiffs) > 0 or len(dataCollection.diffNumPages) > 0:
 			ex = qtImageCompare(cfg,dataCollection)
 			sys.exit(app.exec_())
-		
+
+def printResults():
+	print("\n=== Changed Images ===\n")
+	for item in dataCollection.imgDiffs:
+		print(item[0])
+	print("\n=== Differing Page Numbers ===\n")
+	for item in dataCollection.diffNumPages:
+		print(item[0])
+	print()
+	
 def main():
 	global app
 	
@@ -395,6 +402,7 @@ def main():
 		spawnWorkerThreads()
 	
 	if (cfg.mode == 2 and cfg.noGui == False) or cfg.mode == 3:
+		printResults()
 		spawnGui()
 		
 	if cfg.mode == 4:
