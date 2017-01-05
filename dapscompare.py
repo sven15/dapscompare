@@ -76,6 +76,17 @@ def runRenderers(testcase):
 									os.makedirs(folderName)
 								if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
 									myRenderHtml = renderHtml(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+		elif filetype == 'single-html' and cfg.noGui == False:
+			for build in os.listdir(testcase+"build"):
+				if not build.startswith("."):
+					for htmlBuild in os.listdir(testcase+"build/"+build+"/single-html/"):
+						for htmlFile in os.listdir(testcase+"build/"+build+"/single-html/"+htmlBuild):
+							for width in cfg.htmlWidth:
+								folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': filetype, 'Width': str(width)})+"/"
+								if not os.path.exists(folderName):
+									os.makedirs(folderName)
+								if not os.path.islink(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile):
+									myRenderHtml = renderHtml(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile,width,folderName)
 		elif filetype == 'epub':
 			pass
 
@@ -107,7 +118,7 @@ def runTests(testcase):
 			dataCollectionLock.acquire()
 			dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
 			dataCollectionLock.release()
-			print("D")
+			print("Differing number of result images from "+referencePath)
 			continue
 		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
 		if not os.path.exists(referencePath):
@@ -174,6 +185,8 @@ class MyConfig:
 				self.filetypes.remove('pdf')
 			elif parameter == "--no-html":
 				self.filetypes.remove('html')
+			elif parameter == "--no-shtml":
+				self.filetypes.remove('single-html')
 			elif parameter == "--no-epub":
 				self.filetypes.remove('epub')
 			elif parameter.startswith("--html-width="):
@@ -203,7 +216,7 @@ class MyConfig:
 		if self.noGui == True:
 			self.filetypes = ['pdf']
 		else:
-			self.filetypes = ['pdf','html']
+			self.filetypes = ['pdf','html','single-html','epub']
 
 		self.htmlWidth = [1280]
 
@@ -280,7 +293,7 @@ def spawnWorkerThreads():
 	
 	if cfg.mode == 2:
 		writeFile(cfg.directory+cfg.resDiffFile,json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
-		print(dataCollection.diffNumPages)
+		#print(dataCollection.diffNumPages)
 	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
 
 def queueTestcases(silent=False):

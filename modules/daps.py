@@ -42,17 +42,27 @@ class daps:
 		for dcFile in self.dcFiles:
 			self.procDaps = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procDaps.wait()
-		
+
 	def compileHtml(self):
 		my_env = os.environ.copy()
 		for dcFile in self.dcFiles:
 			self.procHtml = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" html"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procHtml.wait()
-		
+
+	def compileSingleHtml(self):
+		my_env = os.environ.copy()
+		for dcFile in self.dcFiles:
+			self.procHtml = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" html --single"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
+			self.procHtml.wait()
+
 	def compileEpub(self):
 		my_env = os.environ.copy()
 		self.procEpub = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" epub"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
-		
+
 	def compileAllWait(self):
-		self.compilePdf()
-		self.compileHtml()
+		if 'pdf' in self.filetypes:
+			self.compilePdf()
+		if 'html' in self.filetypes:
+			self.compileHtml()
+		if 'single-html' in self.filetypes:
+			self.compileSingleHtml()

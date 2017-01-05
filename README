@@ -58,6 +58,10 @@ clean		Remove all temporary files from working directories. Run
 		not using an X Server which is required for rendering
 		HTML.
 
+--no-shtml	Do not build single HTML files. Use this parameter when
+		you are not using an X Server which is required for
+		rendering HTML.
+
 --no-epub	Do not build EPUB files. *EPUB not available yet*
 
 --html-width=x	Render HTML page with a width of x pixels. x can also be
