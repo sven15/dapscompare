@@ -32,7 +32,8 @@ compare		Builds all DC files contained in sub folders of the
 		testcases folder and subtracts them from the reference
 		images.
 		
-view		Don't build files, just view results of last run in GUI.
+view		Don't build files, just view results of last run and
+		compare differing images in GUI if available.
 
 clean		Remove all temporary files from working directories. Run
 		the clean command before you use reference for the first
@@ -72,7 +73,7 @@ clean		Remove all temporary files from working directories. Run
 
 === Version ===
 
-Version: dapscompare 0.1.0
+Version: dapscompare 0.2.0
 
 === License ===
 

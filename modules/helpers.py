@@ -30,7 +30,7 @@ def modeToName(mode):
 	if mode == 2:
 		return "dapscompare-comparison"
 
-def hashPath(path, verbose=0):
+def hashPath(path):
 	import hashlib, os
 	SHAhash = hashlib.sha1()
 	if not os.path.exists (path):
