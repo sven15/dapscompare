@@ -50,3 +50,21 @@ def readFileBlock(filepath,SHAhash):
 			buf = f1.read(4096)
 			if not buf : break
 			SHAhash.update(hashlib.sha1(buf).hexdigest())
+
+def registerHash(params,dataCollection):
+	import json, hashlib
+	# create md5sum of hash
+	hashstring = json.dumps(params, sort_keys=True)
+	md5 = hashlib.md5(hashstring.encode('utf-8'))
+	# add md5sum and string to config and save to file in the end
+	dataCollection.lock.acquire()
+	dataCollection.depHashes[md5.hexdigest()] = params
+	dataCollection.lock.release()
+	return md5.hexdigest()
+
+def listFiles(folder):
+	result = []
+	for item in os.listdir(folder):
+		if os.path.isfile(folder+item):
+			result.append(item)
+	return result
