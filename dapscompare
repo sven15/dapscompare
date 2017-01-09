@@ -147,14 +147,8 @@ class MyConfig:
 				self.dapsParam = parameter[7:]
 			elif parameter.startswith("--testcases="):
 				self.directory = parameter[12:]
-			elif parameter == "--no-pdf":
-				self.filetypes.remove('pdf')
-			elif parameter == "--no-html":
-				self.filetypes.remove('html')
-			elif parameter == "--no-shtml":
-				self.filetypes.remove('single-html')
-			elif parameter == "--no-epub":
-				self.filetypes.remove('epub')
+			elif parameter.startswith("--filetypes="):
+				self.filetypes = parameter[13:].split(",")
 			elif parameter.startswith("--html-width="):
 				self.htmlWidth = parameter[13:].split(",")
 			elif parameter == "--load-config":
