@@ -35,7 +35,7 @@ class myWorkThread (QtCore.QThread):
 
 	def run(self):
 		# we want the threads to keep running until the queue of test cases is empty
-		while(True):
+		while True:
 			testcase = ""
 			foldersLock.acquire()
 			if(folders.empty() == False):

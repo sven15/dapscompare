@@ -36,31 +36,17 @@ def hashPath(path):
 	if not os.path.exists (path):
 		return False
 	if os.path.isfile(path):
-		try:
-			f1 = open(path, 'rb')
-		except:
-			f1.close()
-			continue
-		while 1:
+		readFileBlock(path,SHAhash)
+	else:
+		for root, dirs, files in os.walk(path):
+			for names in files:
+				filepath = os.path.join(root,names)
+				readFileBlock(filepath,SHAhash)
+	return SHAhash.hexdigest()
+
+def readFileBlock(filepath,SHAhash):
+	with open(filepath, 'rb') as f1:
+		while True:
 			buf = f1.read(4096)
 			if not buf : break
 			SHAhash.update(hashlib.sha1(buf).hexdigest())
-		f1.close()
-	else:
-		try:
-			for root, dirs, files in os.walk(path):
-				for names in files:
-					filepath = os.path.join(root,names)
-					try:
-						f1 = open(filepath, 'rb')
-					except:
-						f1.close()
-						continue
-					while 1:
-						buf = f1.read(4096)
-						if not buf : break
-						SHAhash.update(hashlib.sha1(buf).hexdigest())
-					f1.close()
-		except:
-			pass
-	return SHAhash.hexdigest()
