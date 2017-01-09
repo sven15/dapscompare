@@ -16,10 +16,10 @@ from scipy.misc import imsave, imread
 import numpy as np
 from PyQt4 import QtGui, QtCore
 
-from modules.qtcompare import qtImageCompare, toQImage
-from modules.renderers import renderHtml, renderPdf
-from modules.helpers import readFile, writeFile, modeToName, hashPath
-from modules.daps import daps
+from src.dapscompare.qtcompare import qtImageCompare, toQImage
+from src.dapscompare.renderers import renderHtml, renderPdf
+from src.dapscompare.helpers import readFile, writeFile, modeToName, hashPath
+from src.dapscompare.daps import daps
 
 
 class myWorkThread (QtCore.QThread):
@@ -107,6 +107,7 @@ def prepareEpub(testcase):
 								os.makedirs(folderName)
 							if not os.path.islink(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile):
 								myRenderHtml = renderHtml(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile,width,folderName)
+
 # prepare for file types and then call the appropriate rendering modules
 def runRenderers(testcase):
 	for filetype in cfg.filetypes:

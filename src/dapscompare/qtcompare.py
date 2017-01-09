@@ -12,7 +12,7 @@ from PyQt4 import QtGui, QtCore
 import numpy as np
 import sys
 from scipy.misc import *
-from modules.helpers import *
+from src.dapscompare.helpers import *
 from PIL import ImageDraw, Image
 from scipy.cluster.vq import kmeans2, whiten, kmeans
 import json
