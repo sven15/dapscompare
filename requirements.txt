@@ -1,0 +1,7 @@
+# Pip requirements file
+
+# docopt
+scipy
+numpy
+Pillow
+PyQt4
