@@ -2,6 +2,7 @@
 
 dapscompare is a tool for comparing documentation output. It has two main
 modes:
+
 - Reference mode: build the initial set of reference images
 - Compare mode: build a set of images that can be compared to the reference set
 
@@ -13,13 +14,22 @@ there are CPU cores available.
 
 dapscompare requires DAPS and Python 3. Additionally, use pip or the package
 manager of your operating system to install:
+
 - PyQt4
 - SciPy
 - Numpy
 - Pillow (PIL fork)
 
+If you install with pip, you probably need also other packages. For openSUSE,
+you need to install:
+
+- libtiff-devel
+- libpng12-devel
+- libjpeg8-devel
+
+
 On openSUSE 42.2, run:
-# zypper in python3-tk python3-qt4
+# zypper in python3-tk python3-qt4 python3-Pillow
 # pip3 install Pillow scipy numpy
 
 === Commands ===
