@@ -1,34 +1,41 @@
 #!/usr/bin/env python3
 
 # The MIT License (MIT)
-# 
+#
 # Copyright (c) 2016, Sven Seeberg-Elverfeldt <sseebergelverfeldt@suse.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import multiprocessing, threading, queue, os, sys, json, string, shutil
+import multiprocessing
+import threading
+import queue
+import os
+import sys
+import json
+import shutil
 
 from scipy.misc import imsave, imread
 import numpy as np
 from PyQt4 import QtGui, QtCore
 
-from dapscompare.qtcompare import qtImageCompare, toQImage
+from dapscompare.qtcompare import qtImageCompare
 from dapscompare.renderers import renderHtml, renderPdf
-from dapscompare.helpers import readFile, writeFile, modeToName, hashPath
+from dapscompare.helpers import readFile, writeFile, hashPath
 from dapscompare.daps import daps
 
+
 class myWorkThread (QtCore.QThread):
-# worker threads which compile the DC files and compare the results
-	def __init__(self,threadID, name, counter):
+	#worker threads which compile the DC files and compare the results
+	def __init__(self, threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
 		self.name = name
 		self.counter = counter
-		
+
 	def __del__(self):
 		self.wait()
 
@@ -44,33 +51,35 @@ class myWorkThread (QtCore.QThread):
 			if(testcase == ""):
 				break
 			outputTerminal(self.name+" now working on "+testcase)
-			
-			cleanDirectories(testcaseSubfolders = ['build'], rmConfigs=False, testcase=testcase)
+
+			cleanDirectories(testcaseSubfolders=['build'], rmConfigs=False, testcase=testcase)
 			# compile DC files
-			daps(testcase,cfg.dapsParam,cfg.filetypes)
+			daps(testcase, cfg.dapsParam, cfg.filetypes)
 
 			# render results to images
 			runRenderers(testcase)
-					
+
 			if(cfg.mode == 2):
 				runTests(testcase)
 		outputTerminal(self.name+" finished")
+
 
 # prepare for file types and then call the appropriate rendering modules
 def runRenderers(testcase):
 	for filetype in cfg.filetypes:
 		if filetype == 'pdf':
-			for renderItem in pdfItems(testcase,cfg,dataCollection):
-				renderPdf(renderItem[0],renderItem[1],renderItem[2])
-		elif filetype == 'html' and cfg.noGui == False:
-			for renderItem in htmlItems(testcase,cfg,dataCollection):
-				renderHtml(renderItem[0],renderItem[1],renderItem[2])
-		elif filetype == 'single-html' and cfg.noGui == False:
-			for renderItem in singleHtmlItems(testcase,cfg,dataCollection):
-				renderHtml(renderItem[0],renderItem[1],renderItem[2])
-		elif filetype == 'epub' and cfg.noGui == False:
-			for renderItem in epubItems(testcase,cfg,dataCollection):
-				renderHtml(renderItem[0],renderItem[1],renderItem[2])
+			for renderItem in pdfItems(testcase, cfg, dataCollection):
+				renderPdf(renderItem[0], renderItem[1], renderItem[2])
+		elif filetype == 'html' and cfg.noGui is False:
+			for renderItem in htmlItems(testcase, cfg, dataCollection):
+				renderHtml(renderItem[0], renderItem[1], renderItem[2])
+		elif filetype == 'single-html' and cfg.noGui is False:
+			for renderItem in singleHtmlItems(testcase, cfg, dataCollection):
+				renderHtml(renderItem[0], renderItem[1], renderItem[2])
+		elif filetype == 'epub' and cfg.noGui is False:
+			for renderItem in epubItems(testcase, cfg, dataCollection):
+				renderHtml(renderItem[0], renderItem[1], renderItem[2])
+
 
 # diff images of reference and compare run and save result
 def runTests(testcase):
@@ -85,7 +94,7 @@ def runTests(testcase):
 			dataCollection.lock.release()
 			print("Differing number of result images from "+referencePath)
 			continue
-		cleanDirectories(testcaseSubfolders = ['dapscompare-comparison','dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
+		cleanDirectories(testcaseSubfolders=['dapscompare-comparison', 'dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
 		if not os.path.exists(referencePath):
 			print("No reference images for "+dataCollection.depHashes[md5])
 			continue
@@ -99,7 +108,7 @@ def runTests(testcase):
 			try:
 				imgDiff = imgRef - imgComp
 				if np.count_nonzero(imgDiff) > 0:
-					imsave(diffFolder+filename,imgDiff)
+					imsave(diffFolder+filename, imgDiff)
 					outputTerminal("Image "+comparisonPath+filename+" has changed.")
 					dataCollection.lock.acquire()
 					dataCollection.imgDiffs.append([referencePath+filename, comparisonPath+filename, diffFolder+filename])
@@ -108,20 +117,23 @@ def runTests(testcase):
 				dataCollection.lock.acquire()
 				dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
 				dataCollection.lock.release()
+
+
 def outputTerminal(text):
 	global outputLock
 	outputLock.acquire()
-	print (text)
-	outputLock.release()      
+	print(text)
+	outputLock.release()
+
 
 class MyConfig:
 	def __init__(self):
 
 		self.stdValues()
-		
+
 		self.cmdParams()
 
-		if self.loadConfigBool == True:
+		if self.loadConfigBool:
 			self.loadConfig()
 
 	def cmdParams(self):
@@ -173,10 +185,10 @@ class MyConfig:
 		else:
 			self.noGui = True
 
-		if self.noGui == True:
+		if self.noGui:
 			self.filetypes = ['pdf']
 		else:
-			self.filetypes = ['pdf','html','single-html','epub']
+			self.filetypes = ['pdf', 'html', 'single-html', 'epub']
 
 		self.htmlWidth = [1280]
 
@@ -196,12 +208,13 @@ class MyConfig:
 					if int(content[hashsum]['Width']) not in self.htmlWidth:
 						self.htmlWidth.append(int(content[hashsum]['Width']))
 
+
 class DataCollector:
 	def __init__(self):
-		
+
 		self.lock = threading.Lock()
-		
-		#if reference and comparison differ in number of pictures, store this here
+
+		# if reference and comparison differ in number of pictures, store this here
 		self.diffNumPages = []
 
 		# compare or reference mode, new empty diff list
@@ -209,7 +222,7 @@ class DataCollector:
 		# view mode, load existing diff list
 		if cfg.mode == 3:
 			imagesList = readFile(cfg.directory+cfg.resDiffFile)
-			if imagesList == False:
+			if imagesList is False:
 				print("Nothing to do.")
 				sys.exit()
 			self.imgDiffs, self.diffNumPages = json.loads(imagesList)
@@ -217,34 +230,34 @@ class DataCollector:
 		# hashes of dependencies like image width and filetype
 		self.depHashes = {}
 		fileContent = readFile(cfg.directory+cfg.resHashFile)		
-		if (fileContent != False and len(fileContent)>2):
+		if (fileContent is not False and len(fileContent) > 2):
 			self.depHashes = json.loads(fileContent)
 
+
 def spawnWorkerThreads():
-	# get number of available cpus. 
-	# we want to compile as many test cases with daps at the same time 
+	# get number of available cpus.
+	# we want to compile as many test cases with daps at the same time
 	# as we can
-	
+
 	print("\n=== Parameters ===\n")
-	
+
 	cpus = multiprocessing.cpu_count()
 	print("Number of CPUs: "+str(cpus))
 	print("Working Directory: "+cfg.directory)
 	print("Building: "+str(cfg.filetypes))
 	global outputLock
-	
+
 	threads = []
-	qWebWorkers = []
 	outputLock = threading.Lock()
-	
+
 	queueTestcases()
-	
+
 	if folders.qsize() < cpus:
 		cpus = folders.qsize()
-	
-	print ("\n=== Creating "+str(cpus)+" Threads ===\n")
 
-	for threadX in range(0,cpus):
+	print("\n=== Creating "+str(cpus)+" Threads ===\n")
+
+	for threadX in range(0, cpus):
 		thread = myWorkThread(threadX, "Thread-"+str(threadX), threadX)
 		thread.start()
 		threads.append(thread)
@@ -254,11 +267,12 @@ def spawnWorkerThreads():
 		t.wait()
 	print("All threads finished.")
 	if cfg.mode == 2:
-		writeFile(cfg.directory+cfg.resDiffFile,json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
-	writeFile(cfg.directory+cfg.resHashFile,json.dumps(dataCollection.depHashes))
+		writeFile(cfg.directory+cfg.resDiffFile, json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
+	writeFile(cfg.directory+cfg.resHashFile, json.dumps(dataCollection.depHashes))
+
 
 def queueTestcases(silent=False):
-	global folders,foldersLock
+	global folders, foldersLock
 	folders = queue.Queue()
 	foldersLock = threading.Lock()
 	if not silent:
@@ -272,18 +286,20 @@ def queueTestcases(silent=False):
 		folders.put(cfg.directory+testcase+"/")
 	foldersLock.release()
 
+
 def findTestcases():
 	for testcase in os.listdir(cfg.directory):
 		if(os.path.isdir(cfg.directory+"/"+testcase)):
 			yield testcase
 
-def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-comparison','dapscompare-result','build'], rmConfigs=True, testcase=False, keepDirs = False):
+
+def cleanDirectories(testcaseSubfolders=['dapscompare-reference', 'dapscompare-comparison', 'dapscompare-result', 'build'], rmConfigs=True, testcase=False, keepDirs=False):
 	global foldersLock
-	if testcase == False:
+	if testcase is False:
 		testcases = findTestcases()
 	else:
 		testcases = [testcase]
-		
+
 	for testcase in testcases:
 		for subfolder in testcaseSubfolders:
 			try:
@@ -299,16 +315,18 @@ def cleanDirectories(testcaseSubfolders = ['dapscompare-reference','dapscompare-
 		except:
 			pass
 		try:
-			os.remove(cfg.directory+cfg.resDiffFile)	
+			os.remove(cfg.directory+cfg.resDiffFile)
 		except:
 			pass
 
+
 def spawnGui():
-	if cfg.noGui == False:
+	if cfg.noGui is False:
 		print("Starting Qt GUI")
 		if len(dataCollection.imgDiffs) > 0 or len(dataCollection.diffNumPages) > 0:
-			ex = qtImageCompare(cfg,dataCollection)
+			ex = qtImageCompare(cfg, dataCollection)
 			sys.exit(app.exec_())
+
 
 def printResults():
 	print("\n=== Changed Images ===\n")
@@ -318,31 +336,32 @@ def printResults():
 	for item in dataCollection.diffNumPages:
 		print(item[0])
 	print()
-	
+
+
 def main():
 	global app
-	
+
 	if "DISPLAY" in os.environ:
 		app = QtGui.QApplication(sys.argv)
 	else:
 		app = QtCore.QCoreApplication(sys.argv)
-		
+
 	global cfg, dataCollection
 	cfg = MyConfig()
 	dataCollection = DataCollector()
-	
+
 	if cfg.mode == 1 or cfg.mode == 2:
 		spawnWorkerThreads()
-	
-	if (cfg.mode == 2 and cfg.noGui == False) or cfg.mode == 3:
+
+	if (cfg.mode == 2 and cfg.noGui is False) or cfg.mode == 3:
 		printResults()
 		spawnGui()
-		
+
 	if cfg.mode == 4:
 		cleanDirectories()
-		
+
 	if cfg.mode == 0:
 		print("Nothing to do. Use --help.")
 
 if __name__ == "__main__":
-    main()
+	main()
