@@ -1,7 +1,7 @@
 #
 # spec file for package dapscompare
 #
-# Copyright (c) 2016 SUSE LINUX GmbH, Nuernberg, Germany.
+# Copyright (c) 2017 SUSE LINUX GmbH, Nuernberg, Germany.
 #
 # All modifications and additions to the file contributed by third parties
 # remain the property of their copyright owners, unless otherwise agreed
@@ -22,19 +22,27 @@ Release:        0
 Summary:        Detect Rendering Changes in Documentation Built with DAPS
 License:        MIT
 Group:          Productivity/Publishing/XML
-Url:            https://github.com/sven15/dapscompare
+Url:            https://github.com/openSUSE/dapscompare
 Source0:        %{name}-%{version}.tar.bz2
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildArch:      noarch
-
+#
+BuildRequires:  python3-Pillow
 BuildRequires:  python3-devel
+BuildRequires:  python3-numpy
+BuildRequires:  python3-qt4
+BuildRequires:  python3-scipy
+BuildRequires:  python3-setuptools
+BuildRequires:  python3-tk
+#
 Requires:       daps
 Requires:       python3
-Requires:       python3-numpy
 Requires:       python3-Pillow
+Requires:       python3-numpy
 Requires:       python3-qt4
 Requires:       python3-scipy
 Requires:       python3-tk
+#
+BuildRoot:      %{_tmppath}/%{name}-%{version}-build
+BuildArch:      noarch
 
 %description
 dapscompare allows detecting rendering changes in documentation built using
@@ -42,24 +50,23 @@ DAPS. To do so, it allows creating a set of reference images and can then
 compares those to images created later on.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q
 
 
 %build
-# empty..?
+python3 setup.py build
+
 
 %install
-mkdir -p %{buildroot}%{_datadir}/%{name}
-cp -r * %{buildroot}%{_datadir}/%{name}
-mkdir -p %{buildroot}%{_bindir}
-(cd %{buildroot}%{_bindir};ln -sr %{buildroot}%{_datadir}/%{name}/%{name}.py %{name})
+python3 setup.py install --prefix=%{_prefix} --root=%{buildroot}
+
 
 %files
 %defattr(-,root,root)
+%doc LICENSE ChangeLog README*
+%{_bindir}/%{name}
 
-%dir %{_datadir}/%{name}
-%{_datadir}/%{name}/*
-%_bindir/%{name}
-
+%{python3_sitelib}/%{name}/
+%{python3_sitelib}/%{name}-%{version}-py%{py3_ver}.egg-info
 
 %changelog
