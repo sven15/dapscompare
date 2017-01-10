@@ -1,4 +1,11 @@
 -------------------------------------------------------------------
+Tue Jan 10 12:44:35 UTC 2017 - sknorr@suse.com
+
+- Archive updated to version 0.2.1
+- Now using setup.py and related infrastructure
+- No functional changes
+
+-------------------------------------------------------------------
 Thu Jan  5 16:38:12 UTC 2017 - sknorr@suse.com
 
 - Archive updated to version 0.2.0
