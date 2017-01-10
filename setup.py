@@ -35,7 +35,10 @@ setupdict = dict(
    packages=find_packages('src'),
    package_dir={'': 'src'},
    install_requires=['PyQt4', 'scipy', 'numpy', 'Pillow'],
-
+   # have to be included in MANIFEST.in as well.
+   package_data={
+        '': ['src/dapscompare/README'],
+   },
    # TODO: Check, if entry_points is a better alternative
    scripts=['dapscompare'],
 )

@@ -1,0 +1,12 @@
+# MANIFEST.in for sdist
+#
+
+include ChangeLog
+include LICENSE
+include README*
+include src/dapscompare/README
+
+recursive-exclude *.egg-info *
+recursive-exclude src/dapscompare.egg-info *
+
+global-exclude *.py[cod] __pycache__ *.so *.dylib *~
