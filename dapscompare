@@ -16,10 +16,10 @@ from scipy.misc import imsave, imread
 import numpy as np
 from PyQt4 import QtGui, QtCore
 
-from src.dapscompare.qtcompare import qtImageCompare, toQImage
-from src.dapscompare.renderers import renderHtml, renderPdf
-from src.dapscompare.helpers import readFile, writeFile, modeToName, hashPath
-from src.dapscompare.daps import daps
+from dapscompare.qtcompare import qtImageCompare, toQImage
+from dapscompare.renderers import renderHtml, renderPdf
+from dapscompare.helpers import readFile, writeFile, modeToName, hashPath
+from dapscompare.daps import daps
 
 
 class myWorkThread (QtCore.QThread):
@@ -201,7 +201,8 @@ class MyConfig:
 			elif parameter == "clean":
 				self.mode = 4
 			elif parameter == "--help":
-				f = open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'README'), 'r')
+                from dapscompare import import __file__ as dapscomparedir
+				f = open(os.path.join(os.path.dirname(os.path.realpath(dapscomparedir)), 'README'), 'r')
 				print(f.read())
 				f.close()
 				sys.exit()
