@@ -201,7 +201,7 @@ class MyConfig:
 			elif parameter == "clean":
 				self.mode = 4
 			elif parameter == "--help":
-                from dapscompare import import __file__ as dapscomparedir
+				from dapscompare import __file__ as dapscomparedir
 				f = open(os.path.join(os.path.dirname(os.path.realpath(dapscomparedir)), 'README'), 'r')
 				print(f.read())
 				f.close()
