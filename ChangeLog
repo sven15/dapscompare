@@ -1,0 +1,17 @@
+-------------------------------------------------------------------
+Thu Jan  5 16:38:12 UTC 2017 - sknorr@suse.com
+
+- Archive updated to version 0.2.0
+- Builds EPUB and Single-HTML versions (dapscompare #14)
+- Cleans up build directories (dapscompare #7)
+- Can read configuration files via --load-config (dapscompare #2)
+- Fix HTML width option (dapscompare #8)
+- Finds out if images are added/removed in the comparison run
+  (dapscompare #9)
+- Compresses output PNG files
+
+-------------------------------------------------------------------
+Tue Dec 20 19:21:15 UTC 2016 - sknorr@suse.com
+
+- Initial version of package (pseudo-versioned as 0.1.0)
+
