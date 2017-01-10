@@ -70,8 +70,9 @@ clean		Remove all temporary files from working directories. Run
 		a list of comma separated values, i.e. 600,1280,1920
 		This option also defines the EPUB width.
 
---load-config	Load config file of past runs. This option overrides all
-		other file type and resolution options.
+--ignore-conf	Ignore loading of config file from previous runs. The
+		config contains file types and HTML widths of previous
+		runs.
 
 === Version ===
 

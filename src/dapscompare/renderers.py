@@ -53,7 +53,7 @@ def htmlItems(testcase,cfg,dataCollection):
 			for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
 				for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
 					for width in cfg.htmlWidth:
-						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'html', 'Width': str(width)},dataCollection)+"/"
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'html', 'Width': str(width), 'File Name': htmlBuild+htmlFile},dataCollection)+"/"
 						if not os.path.exists(folderName):
 							os.makedirs(folderName)
 						if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
@@ -66,7 +66,7 @@ def singleHtmlItems(testcase,cfg,dataCollection):
 			for htmlBuild in os.listdir(testcase+"build/"+build+"/single-html/"):
 				for htmlFile in os.listdir(testcase+"build/"+build+"/single-html/"+htmlBuild):
 					for width in cfg.htmlWidth:
-						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'single-html', 'Width': str(width)},dataCollection)+"/"
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'single-html', 'Width': str(width), 'File Name': htmlBuild+htmlFile},dataCollection)+"/"
 						if not os.path.exists(folderName):
 							os.makedirs(folderName)
 						if not os.path.islink(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile):
@@ -84,7 +84,7 @@ def epubItems(testcase,cfg,dataCollection):
 						zip_ref.extractall(testcase+"build/"+build+"/"+epub[0:-5]+"/")
 					for htmlFile in os.listdir(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"):
 						for width in cfg.htmlWidth:
-							folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'epub', 'Width': str(width)},dataCollection)+"/"
+							folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'epub', 'Width': str(width), 'File Name': epub},dataCollection)+"/"
 							if not os.path.exists(folderName):
 								os.makedirs(folderName)
 							if not os.path.islink(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile):

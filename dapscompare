@@ -151,8 +151,8 @@ class MyConfig:
 				self.filetypes = parameter[13:].split(",")
 			elif parameter.startswith("--html-width="):
 				self.htmlWidth = parameter[13:].split(",")
-			elif parameter == "--load-config":
-				self.loadConfigBool = True
+			elif parameter == "--ignore-conf":
+				self.loadConfigBool = False
 
 	def stdValues(self):
 		self.resDiffFile = "dapscompare-diff.json"
@@ -182,7 +182,7 @@ class MyConfig:
 
 		self.dapsParam = "--force"
 
-		self.loadConfigBool = False
+		self.loadConfigBool = True
 
 	def loadConfig(self):
 		content = readFile(self.directory+"/"+self.resHashFile)
