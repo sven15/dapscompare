@@ -50,7 +50,7 @@ class myWorkThread (QtCore.QThread):
 			# finish the thread if queue is empty
 			if(testcase == ""):
 				break
-			outputTerminal(self.name+" now working on "+testcase)
+			print(self.name+" now working on "+testcase)
 
 			cleanDirectories(testcaseSubfolders=['build'], rmConfigs=False, testcase=testcase)
 			# compile DC files
@@ -61,7 +61,7 @@ class myWorkThread (QtCore.QThread):
 
 			if(cfg.mode == 2):
 				runTests(testcase)
-		outputTerminal(self.name+" finished")
+		print(self.name+" finished")
 
 
 # prepare for file types and then call the appropriate rendering modules
@@ -119,17 +119,10 @@ def runTests(testcase):
 				imgDiff = imgRef - imgComp
 				if np.count_nonzero(imgDiff) > 0:
 					imsave(diffFolder+filename, imgDiff)
-					outputTerminal("Image "+comparisonPath+filename+" has changed.")
+					print("Image "+comparisonPath+filename+" has changed.")
 					addImgDiffs([referencePath+filename, comparisonPath+filename, diffFolder+filename])
 			except:
 				addDiffNumPages([referencePath, numRefImgs, numComImgs])
-
-
-def outputTerminal(text):
-	global outputLock
-	outputLock.acquire()
-	print(text)
-	outputLock.release()
 
 
 class MyConfig:
