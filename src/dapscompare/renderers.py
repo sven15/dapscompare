@@ -10,7 +10,7 @@
 
 import os
 from subprocess import check_output, Popen, PIPE
-from src.dapscompare.helpers import modeToName, registerHash
+from .helpers import modeToName, registerHash
 
 def renderHtml(pathHtml,pageWidth,pathPng):
 	# convert all PDF pages into numbered images and place them in reference or comparison folder
