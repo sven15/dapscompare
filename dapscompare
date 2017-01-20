@@ -29,7 +29,7 @@ from dapscompare.daps import daps
 
 
 class myWorkThread (QtCore.QThread):
-	#worker threads which compile the DC files and compare the results
+	# worker threads which compile the DC files and compare the results
 	def __init__(self, threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
@@ -81,6 +81,18 @@ def runRenderers(testcase):
 				renderHtml(renderItem[0], renderItem[1], renderItem[2])
 
 
+def addDiffNumPages(item):
+	dataCollection.lock.acquire()
+	dataCollection.diffNumPages.append(item)
+	dataCollection.lock.release()
+
+
+def addImgDiffs(item)
+	dataCollection.lock.acquire()
+	dataCollection.imgDiffs.append(item)
+	dataCollection.lock.release()
+
+
 # diff images of reference and compare run and save result
 def runTests(testcase):
 	for md5, description in dataCollection.depHashes.items():
@@ -89,9 +101,7 @@ def runTests(testcase):
 		numRefImgs = len(listFiles(referencePath))
 		numComImgs = len(listFiles(comparisonPath))
 		if (numRefImgs - numComImgs) != 0 and numRefImgs != 0:
-			dataCollection.lock.acquire()
-			dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
-			dataCollection.lock.release()
+			addDiffNumPages([referencePath, numRefImgs, numComImgs])
 			print("Differing number of result images from "+referencePath)
 			continue
 		cleanDirectories(testcaseSubfolders=['dapscompare-comparison', 'dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
@@ -110,13 +120,9 @@ def runTests(testcase):
 				if np.count_nonzero(imgDiff) > 0:
 					imsave(diffFolder+filename, imgDiff)
 					outputTerminal("Image "+comparisonPath+filename+" has changed.")
-					dataCollection.lock.acquire()
-					dataCollection.imgDiffs.append([referencePath+filename, comparisonPath+filename, diffFolder+filename])
-					dataCollection.lock.release()
+					addImgDiffs([referencePath+filename, comparisonPath+filename, diffFolder+filename])
 			except:
-				dataCollection.lock.acquire()
-				dataCollection.diffNumPages.append([referencePath, numRefImgs, numComImgs])
-				dataCollection.lock.release()
+				addDiffNumPages([referencePath, numRefImgs, numComImgs])
 
 
 def outputTerminal(text):
@@ -229,7 +235,7 @@ class DataCollector:
 
 		# hashes of dependencies like image width and filetype
 		self.depHashes = {}
-		fileContent = readFile(cfg.directory+cfg.resHashFile)		
+		fileContent = readFile(cfg.directory+cfg.resHashFile)
 		if (fileContent is not False and len(fileContent) > 2):
 			self.depHashes = json.loads(fileContent)
 
