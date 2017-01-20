@@ -17,7 +17,7 @@
 
 
 Name:           dapscompare
-Version:        0.2.0
+Version:        0.2.1
 Release:        0
 Summary:        Detect Rendering Changes in Documentation Built with DAPS
 License:        MIT
