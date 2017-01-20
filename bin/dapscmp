@@ -87,7 +87,7 @@ def addDiffNumPages(item):
 	dataCollection.lock.release()
 
 
-def addImgDiffs(item)
+def addImgDiffs(item):
 	dataCollection.lock.acquire()
 	dataCollection.imgDiffs.append(item)
 	dataCollection.lock.release()

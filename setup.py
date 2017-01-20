@@ -40,7 +40,7 @@ setupdict = dict(
         '': ['src/dapscompare/README'],
    },
    # TODO: Check, if entry_points is a better alternative
-   scripts=['dapscompare'],
+   scripts=['bin/dapscmp'],
 )
 
 setup(**setupdict)
