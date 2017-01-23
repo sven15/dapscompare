@@ -139,18 +139,6 @@ def runRenderers(testcase):
 				renderHtml(renderItem[0], renderItem[1], renderItem[2])
 
 
-def addDiffNumPages(item):
-	dataCollection.lock.acquire()
-	dataCollection.diffNumPages.append(item)
-	dataCollection.lock.release()
-
-
-def addImgDiffs(item):
-	dataCollection.lock.acquire()
-	dataCollection.imgDiffs.append(item)
-	dataCollection.lock.release()
-
-
 # diff images of reference and compare run and save result
 def runTests(testcase):
 	for md5, description in dataCollection.depHashes.items():
@@ -159,7 +147,7 @@ def runTests(testcase):
 		numRefImgs = len(listFiles(referencePath))
 		numComImgs = len(listFiles(comparisonPath))
 		if (numRefImgs - numComImgs) != 0 and numRefImgs != 0:
-			addDiffNumPages([referencePath, numRefImgs, numComImgs])
+			dataCollection.addDiffNumPages([referencePath, numRefImgs, numComImgs])
 			print("Differing number of result images from "+referencePath)
 			continue
 		cleanDirectories(testcaseSubfolders=['dapscompare-comparison', 'dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
@@ -178,9 +166,9 @@ def runTests(testcase):
 				if np.count_nonzero(imgDiff) > 0:
 					imsave(diffFolder+filename, imgDiff)
 					print("Image "+comparisonPath+filename+" has changed.")
-					addImgDiffs([referencePath+filename, comparisonPath+filename, diffFolder+filename])
+					dataCollection.addImgDiffs([referencePath+filename, comparisonPath+filename, diffFolder+filename])
 			except:
-				addDiffNumPages([referencePath, numRefImgs, numComImgs])
+				dataCollection.addDiffNumPages([referencePath, numRefImgs, numComImgs])
 
 
 class MyConfig:
@@ -291,6 +279,17 @@ class DataCollector:
 			self.depHashes = json.loads(fileContent)
 
 
+	def addDiffNumPages(self, item):
+		self.lock.acquire()
+		self.diffNumPages.append(item)
+		self.lock.release()
+
+
+	def addImgDiffs(self, item):
+		self.lock.acquire()
+		self.imgDiffs.append(item)
+		self.lock.release()
+
 def spawnWorkerThreads():
 	# get number of available cpus.
 	# we want to compile as many test cases with daps at the same time
@@ -377,15 +376,7 @@ def cleanDirectories(testcaseSubfolders=['dapscompare-reference', 'dapscompare-c
 			pass
 
 
-def spawnGui():
-	if cfg.noGui is False:
-		print("Starting Qt GUI")
-		if len(dataCollection.imgDiffs) > 0 or len(dataCollection.diffNumPages) > 0:
-			ex = qtImageCompare(cfg, dataCollection)
-			sys.exit(app.exec_())
-
-
-def printResults():
+def printResults(dataCollection):
 	print("\n=== Changed Images ===\n")
 	for item in dataCollection.imgDiffs:
 		print(item[0])

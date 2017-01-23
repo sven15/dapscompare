@@ -21,6 +21,16 @@ import time
 
 gray_color_table = [QtGui.qRgb(i, i, i) for i in range(256)]
 
+
+def spawnGui(app, cfg, dataCollection):
+	from .qtcompare import qtImageCompare
+	if cfg.noGui is False:
+		print("Starting Qt GUI")
+		if len(dataCollection.imgDiffs) > 0 or len(dataCollection.diffNumPages) > 0:
+			ex = qtImageCompare(cfg, dataCollection)
+			sys.exit(app.exec_())
+
+
 def toQImage(im, copy=False):
     if im is None:
         return QtGui.QImage()

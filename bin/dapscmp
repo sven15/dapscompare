@@ -16,12 +16,11 @@ import sys
 
 from PyQt4 import QtGui, QtCore
 
-from dapscompare.helpers import MyConfig, DataCollector
+from dapscompare.helpers import MyConfig, DataCollector, printResults, cleanDirectories, spawnWorkerThreads
+from dapscompare.qtcompare import spawnGui
 
 
 def main():
-	global app
-
 	if "DISPLAY" in os.environ:
 		app = QtGui.QApplication(sys.argv)
 	else:
@@ -32,14 +31,14 @@ def main():
 	dataCollection = DataCollector(cfg)
 
 	if cfg.mode == 1 or cfg.mode == 2:
-		spawnWorkerThreads()
+		spawnWorkerThreads(cfg,dataCollection)
 
 	if (cfg.mode == 2 and cfg.noGui is False) or cfg.mode == 3:
-		printResults()
-		spawnGui()
+		printResults(dataCollection)
+		spawnGui(app, cfg, dataCollection)
 
 	if cfg.mode == 4:
-		cleanDirectories()
+		cleanDirectories(cfg)
 
 	if cfg.mode == 0:
 		print("Nothing to do. Use --help.")
