@@ -26,12 +26,11 @@ def main():
 	else:
 		app = QtCore.QCoreApplication(sys.argv)
 
-	global cfg, dataCollection
 	cfg = MyConfig()
 	dataCollection = DataCollector(cfg)
 
 	if cfg.mode == 1 or cfg.mode == 2:
-		spawnWorkerThreads(cfg,dataCollection)
+		spawnWorkerThreads(cfg, dataCollection)
 
 	if (cfg.mode == 2 and cfg.noGui is False) or cfg.mode == 3:
 		printResults(dataCollection)

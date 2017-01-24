@@ -12,7 +12,7 @@ from subprocess import check_output, Popen, PIPE
 import os
 
 class daps:
-	def __init__(self, testcase, dapsParam, filetypes = ['pdf','html']):
+	def __init__(self, testcase, dapsParam, filetypes = []):
 		self.testcase = testcase
 		self.filetypes = filetypes
 		self.dapsParam = dapsParam

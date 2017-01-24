@@ -88,42 +88,49 @@ def listFiles(folder):
 
 class myWorkThread (QtCore.QThread):
 	# worker threads which compile the DC files and compare the results
-	def __init__(self, threadID, name, counter):
+	def __init__(self, cfg, dataCollection, folders, foldersLock, threadID, name, counter):
 		QtCore.QThread.__init__(self)
 		self.threadID = threadID
 		self.name = name
 		self.counter = counter
+		self.cfg = cfg
+		self.dataCollection = dataCollection
+		self.folders = folders
+		self.foldersLock = foldersLock
 
 	def __del__(self):
 		self.wait()
 
 	def run(self):
+		from .daps import daps
 		# we want the threads to keep running until the queue of test cases is empty
 		while True:
 			testcase = ""
-			foldersLock.acquire()
-			if(folders.empty() == False):
-				testcase = folders.get()
-			foldersLock.release()
+			self.foldersLock.acquire()
+			if(self.folders.empty() == False):
+				testcase = self.folders.get()
+			self.foldersLock.release()
 			# finish the thread if queue is empty
 			if(testcase == ""):
 				break
 			print(self.name+" now working on "+testcase)
 
-			cleanDirectories(testcaseSubfolders=['build'], rmConfigs=False, testcase=testcase)
+			cleanDirectories(self.cfg, testcaseSubfolders=['build'], rmConfigs=False, testcase=testcase)
+			
 			# compile DC files
-			daps(testcase, cfg.dapsParam, cfg.filetypes)
+			daps(testcase, self.cfg.dapsParam, self.cfg.filetypes)
 
 			# render results to images
-			runRenderers(testcase)
+			runRenderers(self.cfg, self.dataCollection, testcase)
 
-			if(cfg.mode == 2):
-				runTests(testcase)
+			if(self.cfg.mode == 2):
+				runTests(self.cfg, self.dataCollection, testcase)
 		print(self.name+" finished")
 
 
 # prepare for file types and then call the appropriate rendering modules
-def runRenderers(testcase):
+def runRenderers(cfg, dataCollection, testcase):
+	from .renderers import pdfItems, renderPdf, htmlItems, singleHtmlItems, epubItems, renderHtml
 	for filetype in cfg.filetypes:
 		if filetype == 'pdf':
 			for renderItem in pdfItems(testcase, cfg, dataCollection):
@@ -140,7 +147,7 @@ def runRenderers(testcase):
 
 
 # diff images of reference and compare run and save result
-def runTests(testcase):
+def runTests(cfg, dataCollection, testcase):
 	for md5, description in dataCollection.depHashes.items():
 		referencePath = testcase+"dapscompare-reference/"+md5+"/"
 		comparisonPath = testcase+"dapscompare-comparison/"+md5+"/"
@@ -148,9 +155,8 @@ def runTests(testcase):
 		numComImgs = len(listFiles(comparisonPath))
 		if (numRefImgs - numComImgs) != 0 and numRefImgs != 0:
 			dataCollection.addDiffNumPages([referencePath, numRefImgs, numComImgs])
-			print("Differing number of result images from "+referencePath)
 			continue
-		cleanDirectories(testcaseSubfolders=['dapscompare-comparison', 'dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
+		cleanDirectories(cfg, testcaseSubfolders=['dapscompare-comparison', 'dapscompare-result'], rmConfigs=False, keepDirs=True, testcase=testcase)
 		if not os.path.exists(referencePath):
 			print("No reference images for "+dataCollection.depHashes[md5])
 			continue
@@ -165,7 +171,6 @@ def runTests(testcase):
 				imgDiff = imgRef - imgComp
 				if np.count_nonzero(imgDiff) > 0:
 					imsave(diffFolder+filename, imgDiff)
-					print("Image "+comparisonPath+filename+" has changed.")
 					dataCollection.addImgDiffs([referencePath+filename, comparisonPath+filename, diffFolder+filename])
 			except:
 				dataCollection.addDiffNumPages([referencePath, numRefImgs, numComImgs])
@@ -290,7 +295,7 @@ class DataCollector:
 		self.imgDiffs.append(item)
 		self.lock.release()
 
-def spawnWorkerThreads():
+def spawnWorkerThreads(cfg, dataCollection):
 	# get number of available cpus.
 	# we want to compile as many test cases with daps at the same time
 	# as we can
@@ -301,12 +306,10 @@ def spawnWorkerThreads():
 	print("Number of CPUs: "+str(cpus))
 	print("Working Directory: "+cfg.directory)
 	print("Building: "+str(cfg.filetypes))
-	global outputLock
 
 	threads = []
-	outputLock = threading.Lock()
 
-	queueTestcases()
+	folders, foldersLock = queueTestcases(cfg)
 
 	if folders.qsize() < cpus:
 		cpus = folders.qsize()
@@ -314,7 +317,7 @@ def spawnWorkerThreads():
 	print("\n=== Creating "+str(cpus)+" Threads ===\n")
 
 	for threadX in range(0, cpus):
-		thread = myWorkThread(threadX, "Thread-"+str(threadX), threadX)
+		thread = myWorkThread(cfg, dataCollection, folders, foldersLock, threadX, "Thread-"+str(threadX), threadX)
 		thread.start()
 		threads.append(thread)
 
@@ -327,32 +330,31 @@ def spawnWorkerThreads():
 	writeFile(cfg.directory+cfg.resHashFile, json.dumps(dataCollection.depHashes))
 
 
-def queueTestcases(silent=False):
-	global folders, foldersLock
+def queueTestcases(cfg, silent=False):
 	folders = queue.Queue()
 	foldersLock = threading.Lock()
 	if not silent:
 		print("\n=== Test Cases ===\n")
 	n = 1
 	foldersLock.acquire()
-	for testcase in findTestcases():
+	for testcase in findTestcases(cfg):
 		if not silent:
 			print(str(n)+". "+testcase)
 			n = n + 1
 		folders.put(cfg.directory+testcase+"/")
 	foldersLock.release()
+	return folders, foldersLock
 
 
-def findTestcases():
+def findTestcases(cfg):
 	for testcase in os.listdir(cfg.directory):
 		if(os.path.isdir(cfg.directory+"/"+testcase)):
 			yield testcase
 
 
-def cleanDirectories(testcaseSubfolders=['dapscompare-reference', 'dapscompare-comparison', 'dapscompare-result', 'build'], rmConfigs=True, testcase=False, keepDirs=False):
-	global foldersLock
+def cleanDirectories(cfg, testcaseSubfolders=['dapscompare-reference', 'dapscompare-comparison', 'dapscompare-result', 'build'], rmConfigs=True, testcase=False, keepDirs=False):
 	if testcase is False:
-		testcases = findTestcases()
+		testcases = findTestcases(cfg)
 	else:
 		testcases = [testcase]
 
