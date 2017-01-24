@@ -37,20 +37,20 @@ On openSUSE 42.2, run:
 reference	Builds all DC files contained in sub folders of the
 		testcases folder and stores images of all pages in
 		the dapscompare-reference folders.
-				
+
 compare		Builds all DC files contained in sub folders of the
 		testcases folder and subtracts them from the reference
 		images.
-		
+
 view		Don't build files, just view results of last run and
 		compare differing images in GUI if available.
 
 clean		Remove all temporary files from working directories. Run
 		the clean command before you use reference for the first
 		time.
-		
+
 === Parameters ===
-		
+
 --daps=''	Allows to pass any parameters to daps. The base command
 		is "daps [X] -d DC-file pdf". Without this parameter,
 		--force will be added automatically.
@@ -62,24 +62,17 @@ clean		Remove all temporary files from working directories. Run
 --testcases=''	Sets the path to the folder containing the test cases.
 		If none is set, the current working directory is 
 		assumed.
-		
---no-pdf	Do not build PDF files.
 
---no-html	Do not build HTML files. Use this parameter when you are
-		not using an X Server which is required for rendering
-		HTML.
-
---no-shtml	Do not build single HTML files. Use this parameter when
-		you are not using an X Server which is required for
-		rendering HTML.
-
---no-epub	Do not build EPUB files. *EPUB not available yet*
+--filetypes=''	Select file types.
+		Default: html,single-html,pdf,epub
 
 --html-width=x	Render HTML page with a width of x pixels. x can also be
 		a list of comma separated values, i.e. 600,1280,1920
+		This option also defines the EPUB width.
 
---load-config	Load config file of past runs. This option overrides all
-		other file type and resolution options.
+--ignore-conf	Ignore loading of config file from previous runs. The
+		config contains file types and HTML widths of previous
+		runs.
 
 === Version ===
 
@@ -99,7 +92,7 @@ without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to 
 permit persons to whom the Software is furnished to do so, subject to 
 the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included
 in all copies or substantial portions of the Software.
 

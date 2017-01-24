@@ -34,13 +34,14 @@ setupdict = dict(
    # simple. Or you can use find_packages().
    packages=find_packages('src'),
    package_dir={'': 'src'},
-   install_requires=['PyQt4', 'scipy', 'numpy', 'Pillow'],
+   install_requires=[#'PyQt4',
+                     'scipy', 'numpy', 'Pillow'],
    # have to be included in MANIFEST.in as well.
    package_data={
         '': ['src/dapscompare/README'],
    },
    # TODO: Check, if entry_points is a better alternative
-   scripts=['dapscompare'],
+   scripts=['bin/dapscmp'],
 )
 
 setup(**setupdict)
