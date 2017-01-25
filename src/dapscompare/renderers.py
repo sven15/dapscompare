@@ -10,6 +10,7 @@
 
 import os
 from subprocess import check_output, Popen, PIPE
+from .helpers import modeToName, registerHash
 
 def renderHtml(pathHtml,pageWidth,pathPng):
 	# convert all PDF pages into numbered images and place them in reference or comparison folder
@@ -37,3 +38,54 @@ def renderPdfWand(pathPdf, pathPngDir):
 			#i.alpha_channel = False
 			#i.save(filename=pathPngDir+'/page-%s.png' % x)
 			i.save(filename=pathPngDir+'/page-%03d.png')
+
+#find the PDF files in build folder and convert to png
+def pdfItems(testcase,cfg,dataCollection):
+	folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'pdf'},dataCollection)
+	if not os.path.exists(folderName):
+		os.makedirs(folderName)
+	yield (testcase+"build/*/*.pdf",100,folderName)
+
+#find HTML files in build folder and convert to png
+def htmlItems(testcase,cfg,dataCollection):
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for htmlBuild in os.listdir(testcase+"build/"+build+"/html/"):
+				for htmlFile in os.listdir(testcase+"build/"+build+"/html/"+htmlBuild):
+					for width in cfg.htmlWidth:
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'html', 'Width': str(width), 'File Name': htmlBuild+htmlFile},dataCollection)+"/"
+						if not os.path.exists(folderName):
+							os.makedirs(folderName)
+						if not os.path.islink(testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile):
+							yield (testcase+"build/"+build+"/html/"+htmlBuild+"/"+htmlFile,width,folderName)
+
+#find Single HTML files in build folder and convert to png
+def singleHtmlItems(testcase,cfg,dataCollection):
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for htmlBuild in os.listdir(testcase+"build/"+build+"/single-html/"):
+				for htmlFile in os.listdir(testcase+"build/"+build+"/single-html/"+htmlBuild):
+					for width in cfg.htmlWidth:
+						folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'single-html', 'Width': str(width), 'File Name': htmlBuild+htmlFile},dataCollection)+"/"
+						if not os.path.exists(folderName):
+							os.makedirs(folderName)
+						if not os.path.islink(testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile):
+							yield (testcase+"build/"+build+"/single-html/"+htmlBuild+"/"+htmlFile,width,folderName)
+
+#find EPUB files in build folder and convert to png
+def epubItems(testcase,cfg,dataCollection):
+	import zipfile
+	for build in os.listdir(testcase+"build"):
+		if not build.startswith("."):
+			for epub in os.listdir(testcase+"build/"+build+"/"):
+				if epub.endswith(".epub"):
+					os.makedirs(testcase+"build/"+build+"/"+epub[0:-5]+"/")
+					with zipfile.ZipFile(testcase+"build/"+build+"/"+epub, 'r') as zip_ref:
+						zip_ref.extractall(testcase+"build/"+build+"/"+epub[0:-5]+"/")
+					for htmlFile in os.listdir(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"):
+						for width in cfg.htmlWidth:
+							folderName = testcase+modeToName(cfg.mode)+"/"+registerHash({'Type': 'epub', 'Width': str(width), 'File Name': epub},dataCollection)+"/"
+							if not os.path.exists(folderName):
+								os.makedirs(folderName)
+							if not os.path.islink(testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile):
+								yield (testcase+"build/"+build+"/"+epub[0:-5]+"/OEBPS/"+htmlFile,width,folderName)
