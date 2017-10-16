@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 # 
-# Copyright (c) 2016, Sven Seeberg-Elverfeldt <sseebergelverfeldt@suse.com>
+# Copyright (c) 2017, Sven Seeberg-Elverfeldt <sseebergelverfeldt@suse.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 # 
@@ -118,7 +118,10 @@ class myWorkThread (QtCore.QThread):
 			cleanDirectories(self.cfg, testcaseSubfolders=['build'], rmConfigs=False, testcase=testcase)
 			
 			# compile DC files
-			daps(testcase, self.cfg.dapsParam, self.cfg.filetypes)
+			myDaps = daps(testcase, self.cfg.dapsParam, self.cfg.filetypes)
+			for filetype in self.cfg.filetypes:
+				if filetype not in myDaps.success:
+					print(testcase + " failed to build " + filetype)
 
 			# render results to images
 			runRenderers(self.cfg, self.dataCollection, testcase)
@@ -210,7 +213,7 @@ class MyConfig:
 			elif parameter.startswith("--testcases="):
 				self.directory = parameter[12:]
 			elif parameter.startswith("--filetypes="):
-				self.filetypes = parameter[13:].split(",")
+				self.filetypes = parameter[12:].split(",")
 			elif parameter.startswith("--html-width="):
 				self.htmlWidth = parameter[13:].split(",")
 			elif parameter == "--ignore-conf":
