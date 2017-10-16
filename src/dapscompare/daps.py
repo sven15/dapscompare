@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 # 
-# Copyright (c) 2016, Sven Seeberg-Elverfeldt <sseebergelverfeldt@suse.com>
+# Copyright (c) 2017, Sven Seeberg-Elverfeldt <sseebergelverfeldt@suse.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 # 
@@ -23,8 +23,8 @@ class daps:
 		
 		self.findDcFiles()
 		
-		self.compileAllWait()
-				
+		self.success = self.compileAllWait()
+
 	def findDcFiles(self):
 		for filename in os.listdir(self.testcase):
 			if(filename[0:2] == "DC"):
@@ -42,31 +42,45 @@ class daps:
 		for dcFile in self.dcFiles:
 			self.procDaps = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" pdf"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procDaps.wait()
+			result = str(self.procDaps.returncode)
+			return result
 
 	def compileHtml(self):
 		my_env = os.environ.copy()
 		for dcFile in self.dcFiles:
 			self.procHtml = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" html"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procHtml.wait()
+			result = str(self.procHtml.returncode)
+			return result
 
 	def compileSingleHtml(self):
 		my_env = os.environ.copy()
 		for dcFile in self.dcFiles:
 			self.procHtml = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" html --single"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procHtml.wait()
+			result = str(self.procHtml.returncode)
+			return result
 
 	def compileEpub(self):
 		my_env = os.environ.copy()
 		for dcFile in self.dcFiles:
 			self.procEpub = Popen(["cd "+self.testcase+" && /usr/bin/daps "+self.dapsParam+" -d "+dcFile+" epub"], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 			self.procEpub.wait()
+			result = str(self.procEpub.returncode)
+			return result
 
 	def compileAllWait(self):
+		success = []
 		if 'pdf' in self.filetypes:
-			self.compilePdf()
+			if self.compilePdf() == "0":
+				success.append('pdf')
 		if 'html' in self.filetypes:
-			self.compileHtml()
+			if self.compileHtml() == "0":
+				success.append('html')
 		if 'single-html' in self.filetypes:
-			self.compileSingleHtml()
+			if self.compileSingleHtml() == "0":
+				success.append('single-html')
 		if 'epub' in self.filetypes:
-			self.compileEpub()
+			if self.compileEpub() == "0":
+				success.append('epub')
+		return success
