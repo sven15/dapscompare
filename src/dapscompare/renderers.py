@@ -15,7 +15,7 @@ from .helpers import modeToName, registerHash
 def renderHtml(pathHtml,pageWidth,pathPng):
 	# convert all PDF pages into numbered images and place them in reference or comparison folder
 	head, tail = os.path.split(pathHtml)
-	somestring = os.path.join(os.path.dirname(os.path.realpath(__file__)), "html2png.py")+" "+pathHtml+" "+os.path.join(pathPng, tail+".png")+" "+str(pageWidth)
+	somestring = "python3 "+os.path.join(os.path.dirname(os.path.realpath(__file__)), "html2png.py")+" "+pathHtml+" "+os.path.join(pathPng, tail+".png")+" "+str(pageWidth)
 	my_env = os.environ.copy()
 	process = Popen([somestring], env=my_env, shell=True, stdout=PIPE, stderr=PIPE)
 	process.wait()
