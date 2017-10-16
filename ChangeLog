@@ -1,4 +1,16 @@
 -------------------------------------------------------------------
+Mon Oct 16 15:11:29 UTC 2017 - sven-mario.seeberg-elverfeldt@suse.com
+
+- Return failed builds
+- Fixed broken cli parameter "--filetypes="
+
+-------------------------------------------------------------------
+Wed Jan 25 11:06:29 UTC 2017 - sven-mario.seeberg-elverfeldt@suse.com
+
+- removed no-pdf and no-html parameters and introduced filetype
+- binary renamed to dapscmp 
+
+-------------------------------------------------------------------
 Tue Jan 10 12:44:35 UTC 2017 - sknorr@suse.com
 
 - Archive updated to version 0.2.1
