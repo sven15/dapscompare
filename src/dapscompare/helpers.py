@@ -124,14 +124,14 @@ class myWorkThread (QtCore.QThread):
             myDaps = daps(testcase, self.cfg.dapsParam, self.cfg.filetypes)
             for filetype in self.cfg.filetypes:
                 if filetype not in myDaps.success:
-                    print(testcase + " failed to build " + filetype)
+                    if self.cfg.silent == False: print(testcase + " failed to build " + filetype)
 
             # render results to images
             runRenderers(self.cfg, self.dataCollection, testcase)
 
             if(self.cfg.mode == 2):
                 runTests(self.cfg, self.dataCollection, testcase)
-        print(self.name+" finished")
+        if self.cfg.silent == False: print(self.name+" finished")
 
 
 # prepare for file types and then call the appropriate rendering modules
@@ -149,7 +149,6 @@ def runRenderers(cfg, dataCollection, testcase):
                 renderHtml(renderItem[0], renderItem[1], renderItem[2])
         elif filetype == 'epub' and cfg.noGui is False:
             for renderItem in epubItems(testcase, cfg, dataCollection):
-                print(renderItem[0], renderItem[1], renderItem[2])
                 renderHtml(renderItem[0], renderItem[1], renderItem[2])
 
 
@@ -257,6 +256,9 @@ class MyConfig:
         self.dapsParam = "--force"
 
         self.loadConfigBool = True
+
+        self.silent = False
+        self.returnJSON = False
 
     def loadConfig(self):
         content = readFile(self.directory+"/"+self.resHashFile)
