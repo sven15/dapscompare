@@ -21,56 +21,55 @@ from PyQt4.QtWebKit import QWebPage
 
 # This class renders an image from a website using WebKit
 class html2png():
-	
-	# get URL and pixel width as parameters. The width is only approximate
-	def __init__(self,source,target,width):
-		
-		self.width = int(width)
-		self.target = target
-		#self.app = QApplication(sys.argv)
-		signal.signal(signal.SIGINT, signal.SIG_DFL)
-		self.qwPage = QWebPage()
 
-		size = QSize()
-		size.setWidth(int(width))
-		self.qwPage.setViewportSize(size)		
+    # get URL and pixel width as parameters. The width is only approximate
+    def __init__(self,source,target,width):
+        self.width = int(width)
+        self.target = target
+        #self.app = QApplication(sys.argv)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        self.qwPage = QWebPage()
 
-		self.qwPage.connect(self.qwPage, SIGNAL("loadFinished(bool)"), self.onLoadFinished)
-		self.qwPage.mainFrame().load(QUrl(source))
+        size = QSize()
+        size.setWidth(int(width))
+        self.qwPage.setViewportSize(size)
 
-	# do not call this function. it is called via a signal
-	def onLoadFinished(self,result):
-		if not result:
-			sys.exit(1)
+        self.qwPage.connect(self.qwPage, SIGNAL("loadFinished(bool)"), self.onLoadFinished)
+        self.qwPage.mainFrame().load(QUrl(source))
 
-		# Set the size of the (virtual) browser window
-		self.qwPage.setViewportSize(self.qwPage.mainFrame().contentsSize())
+    # do not call this function. it is called via a signal
+    def onLoadFinished(self,result):
+        if not result:
+            sys.exit(1)
 
-		# Paint this frame into an image
-		image = QImage(self.qwPage.viewportSize(), QImage.Format_RGB32)
-		painter = QPainter(image)
-		self.qwPage.mainFrame().render(painter)
-		painter.end()
-		targetHeight = self.width * 1.4142
-		numSplits = math.ceil(image.height() / targetHeight)
-		for x in range(0,numSplits):
-			start = (x) * targetHeight
-			copy = image.copy( 0, int(start), image.width(), targetHeight-1)
-			self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
-		sys.exit(0)
-	
-	#optimize QImage PNG with PIL and save
-	def saveOptPNG(self,img,path):
-		buffer = QBuffer()
-		buffer.open(QIODevice.ReadWrite)
-		img.save(buffer, "PNG")
+        # Set the size of the (virtual) browser window
+        self.qwPage.setViewportSize(self.qwPage.mainFrame().contentsSize())
 
-		strio = BytesIO()
-		strio.write(buffer.data())
-		buffer.close()
-		strio.seek(0)
-		pil_im = Image.open(strio)
-		pil_im.save(path, "PNG", optimize=False,compress_level=9)
+        # Paint this frame into an image
+        image = QImage(self.qwPage.viewportSize(), QImage.Format_RGB32)
+        painter = QPainter(image)
+        self.qwPage.mainFrame().render(painter)
+        painter.end()
+        targetHeight = self.width * 1.4142
+        numSplits = math.ceil(image.height() / targetHeight)
+        for x in range(0,numSplits):
+            start = (x) * targetHeight
+            copy = image.copy( 0, int(start), image.width(), targetHeight-1)
+            self.saveOptPNG(copy,self.target[:-4]+"."+str(x)+".png")
+        sys.exit(0)
+
+    #optimize QImage PNG with PIL and save
+    def saveOptPNG(self,img,path):
+        buffer = QBuffer()
+        buffer.open(QIODevice.ReadWrite)
+        img.save(buffer, "PNG")
+
+        strio = BytesIO()
+        strio.write(buffer.data())
+        buffer.close()
+        strio.seek(0)
+        pil_im = Image.open(strio)
+        pil_im.save(path, "PNG", optimize=False,compress_level=9)
 
 app = QApplication(sys.argv)
 asdf = html2png(sys.argv[1],sys.argv[2],sys.argv[3])

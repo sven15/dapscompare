@@ -73,10 +73,12 @@ clean		Remove all temporary files from working directories. Run
 --ignore-conf	Ignore loading of config file from previous runs. The
 		config contains file types and HTML widths of previous
 		runs.
+--json		Prevents printing output except a JSON containing changed
+		files.
 
 === Version ===
 
-Version: dapscompare 0.3.1
+Version: dapscompare 0.4.0
 
 === License ===
 
