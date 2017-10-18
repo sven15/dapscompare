@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setupdict = dict(
    name='dapscompare',
-   version='0.4.2',
+   version='0.5.1',
    description='dapscompare is a tool for comparing documentation output',
    url='https://github.com/openSUSE/dapscompare',
    # Author details
