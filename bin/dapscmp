@@ -21,8 +21,9 @@ from dapscompare.qtcompare import spawnGui
 
 
 def main():
+
     import psutil
-    # reset affinity against all CPUs
+    p = psutil.Process()
     all_cpus = list(range(psutil.cpu_count()))
     p.cpu_affinity(all_cpus)
 

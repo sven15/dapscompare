@@ -18,6 +18,7 @@ from scipy.cluster.vq import kmeans2, whiten, kmeans
 import json
 import shutil
 import time
+import os
 
 gray_color_table = [QtGui.qRgb(i, i, i) for i in range(256)]
 
@@ -80,21 +81,46 @@ class qtImageCompare(QtWidgets.QMainWindow):
         self.rightImage.installEventFilter(self)
         self.rightImage.setAlignment(QtCore.Qt.AlignCenter)
 
-        # Next button
-        self.btnNext = QtWidgets.QPushButton('&Next', self)
-        self.btnNext.clicked.connect(self.nextImage)
+        exitAction = QtWidgets.QAction('&Exit', self)
+        exitAction.setShortcut('Ctrl+Q')
+        exitAction.setStatusTip('Exit application')
+        exitAction.triggered.connect(QtWidgets.QApplication.quit)
 
-        # Previous button
-        self.btnPrev = QtWidgets.QPushButton('&Previous', self)
-        self.btnPrev.clicked.connect(self.prevImage)
+        nextAction = QtWidgets.QAction('&Next', self)
+        nextAction.setShortcut('Ctrl+N')
+        nextAction.setStatusTip('Next image')
+        nextAction.triggered.connect(self.nextImage)
 
-        # Make reference button
-        self.btnMakeRef = QtWidgets.QPushButton('Make &reference', self)
-        self.btnMakeRef.clicked.connect(self.makeRef)
-        self.btnMakeRef.setFixedWidth(140)
+        prevAction = QtWidgets.QAction('&Previous', self)
+        prevAction.setShortcut('Ctrl+P')
+        prevAction.setStatusTip('Previous image')
+        prevAction.triggered.connect(self.prevImage)
 
-        self.statusText = QtWidgets.QLabel(self)
-        self.statusText.setFixedHeight(50)
+        refAction = QtWidgets.QAction('&Reference', self)
+        refAction.setShortcut('Ctrl+R')
+        refAction.setStatusTip('Set image as reference')
+        refAction.triggered.connect(self.openImage)
+
+        openAction = QtWidgets.QAction('&Open', self)
+        openAction.setShortcut('Ctrl+O')
+        openAction.setStatusTip('Open comparison image')
+        openAction.triggered.connect(self.nextImage)
+
+        copyAction = QtWidgets.QAction('&Copy', self)
+        copyAction.setShortcut('Ctrl+O')
+        copyAction.setStatusTip('Copy image path')
+        copyAction.triggered.connect(self.copyImage)
+
+        self.statusBar()
+
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(nextAction)
+        fileMenu.addAction(prevAction)
+        fileMenu.addAction(refAction)
+        fileMenu.addAction(openAction)
+        fileMenu.addAction(copyAction)
+        fileMenu.addAction(exitAction)
 
         # load initial images
         self.loadImage(imagesList[self.imagePos])
@@ -210,22 +236,17 @@ class qtImageCompare(QtWidgets.QMainWindow):
         parameters = ""
         for item in self.depHashes[md5]:
             parameters = parameters + item +": "+ self.depHashes[md5][item].upper()+", "
-        self.statusText.setText("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+parameters)
+        self.statusBar().showMessage("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+parameters)
         self.setWindowTitle("dapscompare - "+self.imagesList[self.imagePos][1])
 
     # calculate positions of elements in window
     def calcPositions(self):
         width = self.width()
         height = self.height()
-        self.leftImage.move(0,0)
-        self.leftImage.resize(width/2,height-70)
-        self.rightImage.move(int(width/2)+1,0)
-        self.rightImage.resize(width/2,height-70)
-        self.btnNext.move(width - 120, height - 50)
-        self.btnPrev.move(width - 240, height - 50)
-        self.btnMakeRef.move(width - 400, height - 50)
-        self.statusText.move(20, height - 50)
-        self.statusText.setFixedWidth(width - 450)
+        self.leftImage.move(0,30)
+        self.leftImage.resize(width/2,height-60)
+        self.rightImage.move(int(width/2)+1,30)
+        self.rightImage.resize(width/2,height-60)
 
     # refresh positions in window when resizing
     def resizeEvent(self,resizeEvent):
@@ -242,3 +263,13 @@ class qtImageCompare(QtWidgets.QMainWindow):
                 self.rightImage.width(), self.rightImage.height(),
                 QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
         return QtWidgets.QMainWindow.eventFilter(self, widget, event)
+
+    def openImage(self):
+        import subprocess
+        p = subprocess.Popen(["xdg-open", self.imagesList[self.imagePos][1]])
+        #returncode = p.wait()
+
+    def copyImage(self):
+        cb = QtWidgets.QApplication.clipboard()
+        cb.clear(mode=cb.Clipboard )
+        cb.setText(self.imagesList[self.imagePos][1], mode=cb.Clipboard)
