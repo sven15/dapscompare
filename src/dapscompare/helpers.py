@@ -341,8 +341,8 @@ def spawnWorkerThreads(cfg, dataCollection):
         t.wait()
     if cfg.silent == False: print("All threads finished.")
     if cfg.mode == 2:
-        writeFile(cfg.directory+cfg.resDiffFile, json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages]))
-    writeFile(cfg.directory+cfg.resHashFile, json.dumps(dataCollection.depHashes))
+        writeFile(cfg.directory+cfg.resDiffFile, json.dumps([dataCollection.imgDiffs, dataCollection.diffNumPages], sort_keys=True))
+    writeFile(cfg.directory+cfg.resHashFile, json.dumps(dataCollection.depHashes, sort_keys=True))
 
 
 def queueTestcases(cfg, silent=False):
