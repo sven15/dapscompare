@@ -21,6 +21,12 @@ from dapscompare.qtcompare import spawnGui
 
 
 def main():
+
+    import psutil
+    p = psutil.Process()
+    all_cpus = list(range(psutil.cpu_count()))
+    p.cpu_affinity(all_cpus)
+
     if "DISPLAY" in os.environ:
         app = QtWidgets.QApplication(sys.argv)
     else:
