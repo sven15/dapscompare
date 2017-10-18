@@ -70,6 +70,9 @@ class qtImageCompare(QtWidgets.QMainWindow):
         self.resize(800,600)
         self.setMinimumWidth(800)
         self.setMinimumHeight(600)
+        self.calculatedImages = {}
+        for n in range(0,len(self.imagesList)):
+            self.calculatedImages[n] = None
 
         # Left image (reference)
         self.leftImage = QtWidgets.QLabel(self)
@@ -157,63 +160,14 @@ class qtImageCompare(QtWidgets.QMainWindow):
             self.imagePos = self.imagePos - 1
         self.loadImage(self.imagesList[self.imagePos])
 
-    def loadImageOld(self,path):
-        self.pixmapLeft = QtGui.QPixmap(path[0])
-        self.pixmapRight = QtGui.QPixmap(path[1])
-
-        self.leftImage.setPixmap(self.pixmapLeft)
-        self.rightImage.setPixmap(self.pixmapRight)
-
-        self.calcPositions()
-
-        self.rightImage.setPixmap(self.pixmapRight.scaled(
-            self.rightImage.width(), self.rightImage.height(),
-            QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
-        self.leftImage.setPixmap(self.pixmapLeft.scaled(
-            self.leftImage.width(), self.leftImage.height(),
-            QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
-
-    def loadImage(self,path):
-        # read all images
-        referenceImage = imread(path[0])
-        comparisonImage = imread(path[1])
-
-        # flatten the diff map to reduce matrix complexity
-        diffImage = imread(path[2],flatten=True)
-
-        # get all coordinates that are not zero
-        nonzeroCoords = np.nonzero(diffImage)
-
-        # transform to 2 component vectors
-        nonzeroCoords = np.column_stack((nonzeroCoords[0],nonzeroCoords[1]))
-
-        # create image which can be used for drawing
-        i = Image.fromarray(comparisonImage)
-        draw = ImageDraw.Draw(i)
-
-        # use k-means for the first iteration
-        result = kmeans(nonzeroCoords.astype(float),1)
-        n = 0
-
-        timeout = time.time() + 3
-        # iterate k-means until the distortion is lower than 50
-        while(result[1] > 15):
-            n = n + 1
-            result = kmeans(nonzeroCoords.astype(float),n)
-
-            #not more than 10 k-means or 3 seconds
-            if n > 10 or time.time() > timeout:
-                break
-        width = int(result[1])+10
-        # draw boxes around all pixel groups
-        for x, y in result[0]:
-            x = x.astype(np.int64)
-            y = y.astype(np.int64)
-            coords = (y-width, x-width, y+width, x+width)
-            draw.rectangle((coords), fill=None, outline="red")
-
-        # convert nparray to image
-        comparisonImage = np.asarray(i)
+    def loadImage(self, path):
+        if self.calculatedImages[self.imagePos] == None:
+            print("calculating "+str(self.imagePos))
+            (referenceImage, comparisonImage) = kMeans(path)
+            self.calculatedImages[self.imagePos] = (referenceImage, comparisonImage)
+        else:
+            print("loading "+str(self.imagePos))
+            (referenceImage, comparisonImage) = self.calculatedImages[self.imagePos]
 
         # convert image to qimage
         self.pixmapLeft = QtGui.QPixmap.fromImage(toQImage(referenceImage))
@@ -238,6 +192,22 @@ class qtImageCompare(QtWidgets.QMainWindow):
             parameters = parameters + item +": "+ self.depHashes[md5][item].upper()+", "
         self.statusBar().showMessage("Page "+str(self.imagePos+1)+"/"+str(len(self.imagesList))+" | "+self.imagesList[self.imagePos][1]+"\nParameters: "+parameters)
         self.setWindowTitle("dapscompare - "+self.imagesList[self.imagePos][1])
+
+        # calc previous image
+        if self.imagePos == 0:
+            prevImage = len(self.imagesList) - 1
+        else:
+            prevImage = self.imagePos - 1
+        if self.calculatedImages[prevImage] == None:
+            self.calculatedImages[prevImage] = kMeans(self.imagesList[prevImage])
+
+        # calc next image
+        if self.imagePos == len(self.imagesList) - 1:
+            nextImage = 0
+        else:
+            nextImage = self.imagePos + 1
+        if self.calculatedImages[nextImage] == None:
+            self.calculatedImages[nextImage] = kMeans(self.imagesList[nextImage])
 
     # calculate positions of elements in window
     def calcPositions(self):
@@ -273,3 +243,48 @@ class qtImageCompare(QtWidgets.QMainWindow):
         cb = QtWidgets.QApplication.clipboard()
         cb.clear(mode=cb.Clipboard )
         cb.setText(self.imagesList[self.imagePos][1], mode=cb.Clipboard)
+
+
+def kMeans(path):
+    # read all images
+    referenceImage = imread(path[0])
+    comparisonImage = imread(path[1])
+
+    # flatten the diff map to reduce matrix complexity
+    diffImage = imread(path[2],flatten=True)
+
+    # get all coordinates that are not zero
+    nonzeroCoords = np.nonzero(diffImage)
+
+    # transform to 2 component vectors
+    nonzeroCoords = np.column_stack((nonzeroCoords[0],nonzeroCoords[1]))
+
+    # create image which can be used for drawing
+    i = Image.fromarray(comparisonImage)
+    draw = ImageDraw.Draw(i)
+
+    # use k-means for the first iteration
+    result = kmeans(nonzeroCoords.astype(float),1)
+    n = 0
+
+    timeout = time.time() + 3
+    # iterate k-means until the distortion is lower than 50
+    while(result[1] > 15):
+        n = n + 1
+        result = kmeans(nonzeroCoords.astype(float),n)
+
+        #not more than 10 k-means or 3 seconds
+        if n > 10 or time.time() > timeout:
+            break
+    width = int(result[1])+10
+    # draw boxes around all pixel groups
+    for x, y in result[0]:
+        x = x.astype(np.int64)
+        y = y.astype(np.int64)
+        coords = (y-width, x-width, y+width, x+width)
+        draw.rectangle((coords), fill=None, outline="red")
+
+    # convert nparray to image
+    comparisonImage = np.asarray(i)
+
+    return (referenceImage, comparisonImage)
