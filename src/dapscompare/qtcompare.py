@@ -8,7 +8,7 @@
 # 
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 import numpy as np
 import sys
 from scipy.misc import *
@@ -51,7 +51,7 @@ def toQImage(im, copy=False):
 
     raise NotImplementedException
 
-class qtImageCompare(QtGui.QMainWindow):
+class qtImageCompare(QtWidgets.QMainWindow):
     # list images format list of triple reference image path, comparison image path, difference map image path 
     # [['reference path', 'comparison path', 'diffmap path'], ['reference path', 'comparison path', 'diffmap path'], [...] ...]
     def __init__(self, cfg, dta):
@@ -65,35 +65,35 @@ class qtImageCompare(QtGui.QMainWindow):
         self.depHashes = dta.depHashes
         self.imagesList = sorted(imagesList, key=lambda imagesList: imagesList[1])
         self.imagePos = 0
-        self.screenShape = QtGui.QDesktopWidget().screenGeometry()
+        self.screenShape = QtWidgets.QDesktopWidget().screenGeometry()
         self.resize(800,600)
         self.setMinimumWidth(800)
         self.setMinimumHeight(600)
 
         # Left image (reference)
-        self.leftImage = QtGui.QLabel(self)
+        self.leftImage = QtWidgets.QLabel(self)
         self.leftImage.installEventFilter(self)
         self.leftImage.setAlignment(QtCore.Qt.AlignCenter)
 
         # Right image (comparison)
-        self.rightImage = QtGui.QLabel(self)
+        self.rightImage = QtWidgets.QLabel(self)
         self.rightImage.installEventFilter(self)
         self.rightImage.setAlignment(QtCore.Qt.AlignCenter)
 
         # Next button
-        self.btnNext = QtGui.QPushButton('&Next', self)
+        self.btnNext = QtWidgets.QPushButton('&Next', self)
         self.btnNext.clicked.connect(self.nextImage)
 
         # Previous button
-        self.btnPrev = QtGui.QPushButton('&Previous', self)
+        self.btnPrev = QtWidgets.QPushButton('&Previous', self)
         self.btnPrev.clicked.connect(self.prevImage)
 
         # Make reference button
-        self.btnMakeRef = QtGui.QPushButton('Make &reference', self)
+        self.btnMakeRef = QtWidgets.QPushButton('Make &reference', self)
         self.btnMakeRef.clicked.connect(self.makeRef)
         self.btnMakeRef.setFixedWidth(140)
 
-        self.statusText = QtGui.QLabel(self)
+        self.statusText = QtWidgets.QLabel(self)
         self.statusText.setFixedHeight(50)
 
         # load initial images
@@ -241,4 +241,4 @@ class qtImageCompare(QtGui.QMainWindow):
             self.rightImage.setPixmap(self.pixmapRight.scaled(
                 self.rightImage.width(), self.rightImage.height(),
                 QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation))
-        return QtGui.QMainWindow.eventFilter(self, widget, event)
+        return QtWidgets.QMainWindow.eventFilter(self, widget, event)

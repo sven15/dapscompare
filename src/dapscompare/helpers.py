@@ -18,7 +18,7 @@ import shutil
 
 from scipy.misc import imsave, imread
 import numpy as np
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 
 def readFile(filePath):
     if(os.path.isfile(filePath)):
