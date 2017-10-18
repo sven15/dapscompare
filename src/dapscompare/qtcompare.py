@@ -123,7 +123,7 @@ class qtImageCompare(QtWidgets.QMainWindow):
         fileMenu.addAction(exitAction)
 
         # load initial images
-        self.loadImage(imagesList[self.imagePos])
+        self.loadImage(self.imagesList[self.imagePos])
 
         self.show()
 
