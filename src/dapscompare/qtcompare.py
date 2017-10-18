@@ -44,10 +44,10 @@ def toQImage(im, copy=False):
 
         elif len(im.shape) == 3:
             if im.shape[2] == 3:
-                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888);
+                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_RGB888)
                 return qim.copy() if copy else qim
             elif im.shape[2] == 4:
-                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_ARGB32);
+                qim = QtGui.QImage(im.data, im.shape[1], im.shape[0], im.strides[0], QtGui.QImage.Format_ARGB32)
                 return qim.copy() if copy else qim
 
     raise NotImplementedException
@@ -162,11 +162,9 @@ class qtImageCompare(QtWidgets.QMainWindow):
 
     def loadImage(self, path):
         if self.calculatedImages[self.imagePos] == None:
-            print("calculating "+str(self.imagePos))
             (referenceImage, comparisonImage) = kMeans(path)
             self.calculatedImages[self.imagePos] = (referenceImage, comparisonImage)
         else:
-            print("loading "+str(self.imagePos))
             (referenceImage, comparisonImage) = self.calculatedImages[self.imagePos]
 
         # convert image to qimage
