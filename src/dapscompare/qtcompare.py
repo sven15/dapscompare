@@ -58,7 +58,17 @@ class qtImageCompare(QtWidgets.QMainWindow):
     def __init__(self, cfg, dta):
         super(qtImageCompare, self).__init__()
         self.initUI(cfg,dta)
-        
+
+    def keyPressEvent(self,e):
+        if e.key() == QtCore.Qt.Key_Right:
+            self.nextImage()
+        if e.key() == QtCore.Qt.Key_Left:
+            self.prevImage()
+        if e.key() == QtCore.Qt.Key_Return:
+            self.makeRef()
+        if e.key() == QtCore.Qt.Key_Q:
+            QtWidgets.QApplication.quit()
+
     def initUI(self,cfg,dta):
         self.viewDirectory = cfg.directory
         self.cfg = cfg
@@ -99,10 +109,10 @@ class qtImageCompare(QtWidgets.QMainWindow):
         prevAction.setStatusTip('Previous image')
         prevAction.triggered.connect(self.prevImage)
 
-        refAction = QtWidgets.QAction('&Reference', self)
+        refAction = QtWidgets.QAction('Make &Reference', self)
         refAction.setShortcut('Ctrl+R')
         refAction.setStatusTip('Set image as reference')
-        refAction.triggered.connect(self.openImage)
+        refAction.triggered.connect(self.makeRef)
 
         openAction = QtWidgets.QAction('&Open', self)
         openAction.setShortcut('Ctrl+O')
@@ -110,7 +120,7 @@ class qtImageCompare(QtWidgets.QMainWindow):
         openAction.triggered.connect(self.nextImage)
 
         copyAction = QtWidgets.QAction('&Copy', self)
-        copyAction.setShortcut('Ctrl+O')
+        copyAction.setShortcut('Ctrl+C')
         copyAction.setStatusTip('Copy image path')
         copyAction.triggered.connect(self.copyImage)
 
@@ -124,7 +134,6 @@ class qtImageCompare(QtWidgets.QMainWindow):
         fileMenu.addAction(openAction)
         fileMenu.addAction(copyAction)
         fileMenu.addAction(exitAction)
-
         # load initial images
         self.loadImage(self.imagesList[self.imagePos])
 
@@ -132,6 +141,11 @@ class qtImageCompare(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def makeRef(self):
+        quit_msg = "Are you sure you make this image a reference image?"
+        reply = QtWidgets.QMessageBox.question(self, 'Attention!', quit_msg,
+                                               QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.No:
+            return
         shutil.copyfile(self.imagesList[self.imagePos][1],self.imagesList[self.imagePos][0])
         if(len(self.imagesList) == 1):
             self.imagesList=[]
