@@ -17,7 +17,7 @@
 
 
 Name:           dapscompare
-Version:        0.3.0
+Version:        0.5.1
 Release:        0
 Summary:        Detect Rendering Changes in Documentation Built with DAPS
 License:        MIT
@@ -25,21 +25,16 @@ Group:          Productivity/Publishing/XML
 Url:            https://github.com/openSUSE/dapscompare
 Source0:        %{name}-%{version}.tar.bz2
 #
-BuildRequires:  python3-Pillow
-BuildRequires:  python3-devel
-BuildRequires:  python3-numpy
-BuildRequires:  python3-qt4
-BuildRequires:  python3-scipy
 BuildRequires:  python3-setuptools
-BuildRequires:  python3-tk
 #
 Requires:       daps
 Requires:       python3
 Requires:       python3-Pillow
 Requires:       python3-numpy
+Requires:       python3-psutil
 Requires:       python3-qt4
+Requires:       python3-qt5
 Requires:       python3-scipy
-Requires:       python3-tk
 #
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildArch:      noarch
@@ -64,7 +59,7 @@ python3 setup.py install --prefix=%{_prefix} --root=%{buildroot}
 %files
 %defattr(-,root,root)
 %doc LICENSE ChangeLog README*
-%{_bindir}/%{name}
+%{_bindir}/dapscmp
 
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-%{version}-py%{py3_ver}.egg-info
