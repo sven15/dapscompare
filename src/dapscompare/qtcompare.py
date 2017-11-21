@@ -99,7 +99,7 @@ class qtImageCompare(QtWidgets.QMainWindow):
         prevAction.setStatusTip('Previous image')
         prevAction.triggered.connect(self.prevImage)
 
-        refAction = QtWidgets.QAction('&Reference', self)
+        refAction = QtWidgets.QAction('Make &Reference', self)
         refAction.setShortcut('Ctrl+R')
         refAction.setStatusTip('Set image as reference')
         refAction.triggered.connect(self.openImage)
@@ -107,10 +107,10 @@ class qtImageCompare(QtWidgets.QMainWindow):
         openAction = QtWidgets.QAction('&Open', self)
         openAction.setShortcut('Ctrl+O')
         openAction.setStatusTip('Open comparison image')
-        openAction.triggered.connect(self.nextImage)
+        openAction.triggered.connect(self.openImage)
 
         copyAction = QtWidgets.QAction('&Copy', self)
-        copyAction.setShortcut('Ctrl+O')
+        copyAction.setShortcut('Ctrl+C')
         copyAction.setStatusTip('Copy image path')
         copyAction.triggered.connect(self.copyImage)
 
