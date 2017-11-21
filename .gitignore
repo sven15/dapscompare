@@ -71,3 +71,5 @@ target/
 # Our own ignore list:
 testcases
 results.json
+
+.vscode
