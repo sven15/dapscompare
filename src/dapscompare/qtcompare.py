@@ -117,7 +117,7 @@ class qtImageCompare(QtWidgets.QMainWindow):
         openAction = QtWidgets.QAction('&Open', self)
         openAction.setShortcut('Ctrl+O')
         openAction.setStatusTip('Open comparison image')
-        openAction.triggered.connect(self.nextImage)
+        openAction.triggered.connect(self.openImage)
 
         copyAction = QtWidgets.QAction('&Copy', self)
         copyAction.setShortcut('Ctrl+C')
